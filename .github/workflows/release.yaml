@@ -1,0 +1,122 @@
+name: Releases
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Install dependency
+        run: go get -v -t -d ./...
+
+      - name: Test
+        run: |
+          bash scripts/gen-valid-cert.sh
+          bash scripts/gen-chain-cert.sh
+          go test -v ./...
+
+  release:
+    name: Release
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  release_binary:
+    name: Release binary
+    needs: release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [mac_amd64, linux_amd64]
+        include:
+        - os: mac_amd64
+          goos: darwin
+          arch: amd64
+        - os: linux_amd64
+          goos: linux
+          arch: amd64
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p dist/check-tls-cert
+          cp README.md dist/check-tls-cert/
+
+      - name: Build
+        run: |
+          go get -v -t -d ./...
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert .
+
+      - name: Version
+        id: version
+        run: echo "::set-output name=version::$(go run check-tls-cert.go --version | cut -d ' ' -f 3)"
+
+      - name: Archive
+        run: |
+          cd dist
+          mv check-tls-cert check-tls-cert-${VERSION}
+          zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert check-tls-cert-${VERSION}/README.md
+          tar -cJf ../check-tls-cert.tar.xz check-tls-cert-${VERSION}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Upload Release Asset Zip
+        id: upload-release-asset-zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./check-tls-cert.zip
+          asset_name: check-tls-cert-${{ steps.version.outputs.version }}-${{ matrix.goos }}-${{ matrix.arch }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset Tar
+        id: upload-release-asset-tar
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./check-tls-cert.tar.xz
+          asset_name: check-tls-cert-${{ steps.version.outputs.version }}-${{ matrix.goos }}-${{ matrix.arch }}.tar.xz
+          asset_content_type: application/octet-stream

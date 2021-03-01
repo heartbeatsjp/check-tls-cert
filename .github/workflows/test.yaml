@@ -1,0 +1,28 @@
+name: Test
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "[0-9]+.[0-9]+.[0-9]+"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Install dependency
+        run: go get -v -t -d ./...
+
+      - name: Test
+        run: |
+          bash scripts/gen-valid-cert.sh
+          bash scripts/gen-chain-cert.sh
+          go test -v ./...
