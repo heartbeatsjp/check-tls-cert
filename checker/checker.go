@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
-	"github.com/mattn/go-colorable"
 	"github.com/ttkzw/go-color"
 )
 
@@ -35,8 +34,6 @@ var statusString = [...]string{
 	INFO:     "INFO",  // for internal statuses
 	ERROR:    "ERROR", // for internal statuses
 }
-
-var stdout = colorable.NewColorableStdout()
 
 // Code returns a status code.
 func (s Status) Code() int {
@@ -99,12 +96,12 @@ func (s State) String() string {
 
 // Print prints a status message.
 func (s State) Print() {
-	printf("%s: %s\n", s.Status.ColorString(), s.Message)
+	fmt.Printf("%s: %s\n", s.Status.ColorString(), s.Message)
 }
 
 // PrintName prints a checker name.
 func (s State) PrintName() {
-	println(color.Orange.Colorize(fmt.Sprintf("[%s]", s.Name)))
+	fmt.Println(color.Orange.Colorize(fmt.Sprintf("[%s]", s.Name)))
 }
 
 // StateList is the list of results.
@@ -113,11 +110,11 @@ type StateList []State
 // Print prints results.
 func (list *StateList) Print(verbose int, dnType x509util.DNType) {
 	summaryState := list.Summarize()
-	printf("%s: %s\n", summaryState.Status.String(), summaryState.Message)
+	fmt.Printf("%s: %s\n", summaryState.Status.String(), summaryState.Message)
 	if verbose == 0 {
 		return
 	}
-	println()
+	fmt.Println()
 
 	for _, state := range *list {
 		state.PrintName()
@@ -125,18 +122,18 @@ func (list *StateList) Print(verbose int, dnType x509util.DNType) {
 		if verbose > 0 {
 			state.PrintDetails(verbose, dnType)
 		}
-		println("")
+		fmt.Println("")
 	}
 
 	summaryState.PrintName()
 	summaryState.Print()
 
-	println()
+	fmt.Println()
 	switch verbose {
 	case 1:
-		println("To get more detailed information, use the '-vv' option.")
+		fmt.Println("To get more detailed information, use the '-vv' option.")
 	case 2:
-		println("To get more detailed information, use the '-vvv' option.")
+		fmt.Println("To get more detailed information, use the '-vvv' option.")
 	}
 }
 
@@ -185,19 +182,7 @@ func (list *StateList) Summarize() State {
 
 func printDetailsLine(format string, a ...interface{}) {
 	const indentString = "    "
-	print(indentString)
-	printf(format, a...)
-	printf("\n")
-}
-
-func print(a ...interface{}) (n int, err error) {
-	return fmt.Fprint(stdout, a...)
-}
-
-func printf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(stdout, format, a...)
-}
-
-func println(a ...interface{}) (n int, err error) {
-	return fmt.Fprintln(stdout, a...)
+	fmt.Print(indentString)
+	fmt.Printf(format, a...)
+	fmt.Printf("\n")
 }
