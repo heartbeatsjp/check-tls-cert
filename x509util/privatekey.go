@@ -11,7 +11,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"io"
 	"os"
 )
 
@@ -44,16 +43,9 @@ func ParsePrivateKeyFile(keyFile string) (privateKeyInfo PrivateKeyInfo, err err
 }
 
 func readPrivateKeyFile(keyFile string) (block *pem.Block, err error) {
-	var (
-		f             *os.File
-		pemData, rest []byte
-	)
+	var pemData, rest []byte
 
-	if f, err = os.Open(keyFile); err != nil {
-		return nil, err
-	}
-
-	if pemData, err = io.ReadAll(f); err != nil {
+	if pemData, err = os.ReadFile(keyFile); err != nil {
 		return
 	}
 
