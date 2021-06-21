@@ -144,7 +144,7 @@ func getCertificateFileInfo(label string, certFile string, parent *x509.Certific
 		}
 	} else {
 		n := len(certs)
-		certInfoList = make([]CertificateInfo, n, n)
+		certInfoList = make([]CertificateInfo, n)
 		for i := 0; i < n; i++ {
 			cert := certs[n-i-1]
 			certInfo := getCertificateInfo(cert, parent, false)

@@ -138,7 +138,6 @@ func (list *StateList) Print(verbose int, dnType x509util.DNType) {
 	case 2:
 		println("To get more detailed information, use the '-vvv' option.")
 	}
-	return
 }
 
 // Code returns a status code.

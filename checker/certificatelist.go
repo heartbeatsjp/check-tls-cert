@@ -16,7 +16,7 @@ func CheckCertificateList(certs []*x509.Certificate) State {
 	const name = "Peer Certificate List"
 
 	n := len(certs)
-	certInfoList := make([]CertificateInfo, n, n)
+	certInfoList := make([]CertificateInfo, n)
 
 	printDetails := func(verbose int, dnType x509util.DNType) {
 		for _, certInfo := range certInfoList {
