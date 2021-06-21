@@ -7,10 +7,6 @@ Check-tls-cert checks the validity of certificates and certificate chains.
 Check-tls-cert has two commands, 'file' and 'net'. The 'file' command checks TLS certificate files and a private key. The 'net' command connects to a server and checks a TLS certificate.
 
 
-## Requirement
-
-- Go 1.16
-
 ## file command
 
 The 'file' command checks TLS certificate files and a private key.
@@ -23,7 +19,91 @@ It runs the following checks:
 - Validity
 - Certificate Chains
 
-### Usage
+
+## net command
+
+The 'net' command connects to a server and checks a TLS certificate. It supports STARTTLS.
+
+It runs the following checks:
+
+- Certificate List
+- Hostname
+- Validity
+- Certificate Chains
+
+
+## Checkers
+
+### Certificate Files Checker
+
+It checks the order of certificates in a certificate file and the validity of those certificates.
+It verifies the digital signature, Subject, Issuer, and expiration date of the certificate.
+
+Note: The certificate chain from the root certificate is not checked. Therefore, even if the root certificate is not installed on the system, no error will occur.
+
+### Certificate List Checker
+
+It checks the order in which certificates are received from the server and the validity of those certificates.
+It verifies the digital signature, Subject, Issuer, and expiration date of the certificate.
+
+Note: The certificate chain from the root certificate is not checked. Therefore, even if the root certificate is not installed on the system, no error will occur.
+
+### Private Key/Certificate Pair Checker
+
+It checks that the private key and certificate are paired.
+It checks that the public key contained in the private key matches the public key in the certificate.
+
+### Hostname Checker
+
+It checks the specified hostname is a valid hostname for the certificate.
+It verifies the DNS field in the SANs (Subject Alternative Names).
+The legacy CN (Common Name) field is ignored.
+
+### Validity Checker
+
+It checks the validity of the certificate.
+You can set options `-w`/`--warning` and `-c`/`--critical`. These are 14 days and 28 days by default.
+
+### Certificate Chains Checker
+
+It checks the validity of certificate chains.
+It verifies the digital signature, Subject, Issuer, and expiration date of the certificate.
+
+The certificate chain from the root certificate to the server certificate is checked. Therefore, if the root certificate is not installed on the system, an error will occur.
+By setting the option `--root-file`, you can specify a root certificate file to validate the certificate chain.
+
+
+## Limitations
+
+### OS
+
+Only UNIX-like operating systems such as Linux and macOS are supported.
+Windows is not supported, because the system root certificate pool is not available on Windows in Golang 1.16.
+
+### Encoding format for certificates and private keys
+
+Only PEM format is supported.
+
+### Digital signature algorithms
+
+Only the following algorithms are supported:
+
+- RSA
+- ECDSA
+    - NIST P-224 (secp224r1)
+    - NIST P-256 (secp256r1, prime256v1)
+    - NIST P-384 (secp384r1)
+    - NIST P-521 (secp521r1)
+- Ed25519
+
+Only the uncompressed form of ECDSA is supported.
+
+These are due to limitations of Golang.
+
+
+## Usage
+
+### file command
 
 ```
 Checks TLS certificate files.
@@ -47,18 +127,7 @@ Global Flags:
   -w, --warning days     warning threshold in days before expiration date (default 28)
 ```
 
-## net command
-
-The 'net' command connects to a server and checks a TLS certificate. It supports STARTTLS.
-
-It runs the following checks:
-
-- Certificate List
-- Hostname
-- Validity
-- Certificate Chains
-
-### Usage
+### net command
 
 ```
 Connects to a host and checks the TLS certificate.
@@ -83,21 +152,6 @@ Global Flags:
   -v, --verbose count    verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
   -w, --warning days     warning threshold in days before expiration date (default 28)
 ```
-
-## Limitations
-
-Due to limitations of Golang, only the following algorithms are supported:
-
-- RSA
-- ECDSA
-    - NIST P-224 (secp224r1)
-    - NIST P-256 (secp256r1, prime256v1)
-    - NIST P-384 (secp384r1)
-    - NIST P-521 (secp521r1)
-- Ed25519
-
-Due to limitations of Golang, ECDSA supports only the uncompressed form.
-
 
 ## Example of execution
 
