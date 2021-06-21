@@ -9,8 +9,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
+	"os"
 	"time"
 )
 
@@ -20,7 +21,11 @@ func ParseCertificateFiles(certFiles ...string) (certs []*x509.Certificate, err 
 
 	for _, certFile := range certFiles {
 		if certFile != "" {
-			buf, err := ioutil.ReadFile(certFile)
+			f, err := os.Open(certFile)
+			if err != nil {
+				return nil, err
+			}
+			buf, err := io.ReadAll(f)
 			if err != nil {
 				return nil, err
 			}
@@ -50,9 +55,17 @@ const timeFormat = "2006-01-02 15:04:05 -0700"
 
 // ParseCertificateFile parses a certifcate file in PEM format and returns the first certificate.
 func ParseCertificateFile(certFile string) (cert *x509.Certificate, err error) {
-	pemData, err := ioutil.ReadFile(certFile)
-	if err != nil {
-		return
+	var (
+		f       *os.File
+		pemData []byte
+	)
+
+	if f, err = os.Open(certFile); err != nil {
+		return nil, err
+	}
+
+	if pemData, err = io.ReadAll(f); err != nil {
+		return nil, err
 	}
 
 	block, _ := pem.Decode(pemData)
