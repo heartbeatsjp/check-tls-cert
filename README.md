@@ -9,7 +9,7 @@ Check-tls-cert has two commands, 'file' and 'net'. The 'file' command checks TLS
 
 ## Requirement
 
-- Go 1.15
+- Go 1.16
 
 ## file command
 
