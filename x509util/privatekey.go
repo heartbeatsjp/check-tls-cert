@@ -36,6 +36,7 @@ func ParsePrivateKeyFile(keyFile string) (privateKeyInfo PrivateKeyInfo, err err
 		privateKeyInfo, err = parsePKCS8PrivateKey(block.Bytes)
 	default:
 		// If the key file is of an unknown type, readPrivateKeyFile() will fail and it will not reach here.
+		//lint:ignore ST1005 "Private Key" is a component name.
 		err = errors.New("Private Key: unknown type")
 	}
 
@@ -65,6 +66,7 @@ func readPrivateKeyFile(keyFile string) (block *pem.Block, err error) {
 		}
 	}
 
+	//lint:ignore ST1005 "Private Key" is a component name.
 	err = errors.New("Private Key: unknown type")
 	return
 }
@@ -114,6 +116,7 @@ func parsePKCS8PrivateKey(der []byte) (privateKeyInfo PrivateKeyInfo, err error)
 		algo = x509.Ed25519
 	default:
 		// If the public key algorithm is unknown, ParsePKCS8PrivateKey() will fail and it will not reach here.
+		//lint:ignore ST1005 "Private Key" is a component name.
 		err = errors.New("Private Key: unknown public key algorithm")
 	}
 

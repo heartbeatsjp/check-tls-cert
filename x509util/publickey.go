@@ -64,6 +64,7 @@ func ExtractPublicKeyFromCertificate(cert *x509.Certificate) (publicKeyInfo Publ
 			KeyString:          Encode2DigitHex(cert.PublicKey.(ed25519.PublicKey)),
 		}
 	default:
+		//lint:ignore ST1005 "Certificate" is a component name.
 		err = errors.New("Certificate: unknown public key algorithm")
 	}
 
@@ -111,6 +112,7 @@ func ExtractPublicKeyFromPrivateKey(privateKeyInfo PrivateKeyInfo) (publicKeyInf
 			KeyString:          Encode2DigitHex(publicKey),
 		}
 	default:
+		//lint:ignore ST1005 "Private Key" is a component name.
 		err = errors.New("Private Key: unknown public key algorithm")
 	}
 
