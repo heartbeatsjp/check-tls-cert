@@ -27,6 +27,7 @@ func CheckValidity(cert *x509.Certificate, warning int, critical int) State {
 		err     error
 	)
 
+	//lint:ignore SA4006 It was detected by mistake.
 	if message, err = x509util.VerifyValidity(cert, critical); err != nil {
 		status = CRITICAL
 		message = err.Error()
