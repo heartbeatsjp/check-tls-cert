@@ -11,7 +11,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
+	"os"
 )
 
 // PrivateKeyInfo describes the information of a private key.
@@ -45,7 +45,7 @@ func ParsePrivateKeyFile(keyFile string) (privateKeyInfo PrivateKeyInfo, err err
 func readPrivateKeyFile(keyFile string) (block *pem.Block, err error) {
 	var pemData, rest []byte
 
-	if pemData, err = ioutil.ReadFile(keyFile); err != nil {
+	if pemData, err = os.ReadFile(keyFile); err != nil {
 		return
 	}
 
