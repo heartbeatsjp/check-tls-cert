@@ -14,23 +14,32 @@ import (
 func TestExtractPublicKey(t *testing.T) {
 	assert := assert.New(t)
 
+	privateKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
 	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
+	privateKeyInfo, _ := x509util.ParsePrivateKeyFile(privateKeyFile)
+	publicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(privateKeyInfo)
 	publicKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(certs[0])
-	assert.Equal(certs[0].PublicKey, publicKeyInfo.Key, "public key should match")
-	assert.Equal(certs[0].PublicKeyAlgorithm, publicKeyInfo.PublicKeyAlgorithm, "public key algorithm should match")
+	assert.Equal(publicKeyInfo.Key, publicKeyInfoInPrivateKey.Key)
+	assert.Equal(publicKeyInfo.PublicKeyAlgorithm, publicKeyInfoInPrivateKey.PublicKeyAlgorithm)
 
+	privateKeyFile = "../test/testdata/pki/private/server-a-ecdsa.key"
 	certFile = "../test/testdata/pki/cert/valid/server-a-ecdsa.crt"
 	certs, _ = x509util.ParseCertificateFiles(certFile)
+	privateKeyInfo, _ = x509util.ParsePrivateKeyFile(privateKeyFile)
+	publicKeyInfoInPrivateKey, _ = x509util.ExtractPublicKeyFromPrivateKey(privateKeyInfo)
 	publicKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
-	assert.Equal(certs[0].PublicKey, publicKeyInfo.Key, "public key should match")
-	assert.Equal(certs[0].PublicKeyAlgorithm, publicKeyInfo.PublicKeyAlgorithm, "public key algorithm should match")
+	assert.Equal(publicKeyInfo.Key, publicKeyInfoInPrivateKey.Key)
+	assert.Equal(publicKeyInfo.PublicKeyAlgorithm, publicKeyInfoInPrivateKey.PublicKeyAlgorithm)
 
+	privateKeyFile = "../test/testdata/pki/private/server-a-ed25519.key"
 	certFile = "../test/testdata/pki/cert/valid/server-a-ed25519.crt"
 	certs, _ = x509util.ParseCertificateFiles(certFile)
+	privateKeyInfo, _ = x509util.ParsePrivateKeyFile(privateKeyFile)
+	publicKeyInfoInPrivateKey, _ = x509util.ExtractPublicKeyFromPrivateKey(privateKeyInfo)
 	publicKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
-	assert.Equal(certs[0].PublicKey, publicKeyInfo.Key, "public key should match")
-	assert.Equal(certs[0].PublicKeyAlgorithm, publicKeyInfo.PublicKeyAlgorithm, "public key algorithm should match")
+	assert.Equal(publicKeyInfo.Key, publicKeyInfoInPrivateKey.Key)
+	assert.Equal(publicKeyInfo.PublicKeyAlgorithm, publicKeyInfoInPrivateKey.PublicKeyAlgorithm)
 }
 
 func TestEncode2DigitHex(t *testing.T) {

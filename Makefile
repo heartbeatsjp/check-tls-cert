@@ -28,7 +28,7 @@ test: prepare-test-cert
 	go test -v ./...
 
 .PHONY: coverage
-coverage:
+coverage: prepare-test-cert
 	go test ./... -coverprofile=coverage.out
 	go tool cover -func=coverage.out
 	go tool cover -html=coverage.out -o coverage.html

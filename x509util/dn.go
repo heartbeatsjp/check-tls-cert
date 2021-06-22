@@ -20,8 +20,13 @@ type DNType int
 
 // DNType name
 const (
+	// strict format (RFC 4514)
 	StrictDN = DNType(iota)
+
+	// loose format with space
 	LooseDN
+
+	// OpenSSL format
 	OpenSSLDN
 )
 

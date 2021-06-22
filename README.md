@@ -210,14 +210,14 @@ OK: the private key is paired with the certificate
             RSA Public-Key: (2048 bit)
             Modulus:
                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
-                ...(ommited)
+                ...(omitted)
             Exponent: 65537 (0x10001)
     Certificate:
         Public Key Algorithm: RSA
             RSA Public-Key: (2048 bit)
             Modulus:
                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
-                ...(ommited)
+                ...(omitted)
             Exponent: 65537 (0x10001)
     
     To get the full public key, use the '-vvv' option.

@@ -32,7 +32,7 @@ func CheckKeyPair(publicKeyInfoInPrivateKey x509util.PublicKeyInfo, publicKeyInf
 
 			if verbose < 2 {
 				printDetailsLine("            %s", info.KeyString[:45])
-				printDetailsLine("            ...(ommited)")
+				printDetailsLine("            ...(omitted)")
 			} else if verbose >= 2 {
 				const length = 45
 				var line string
@@ -78,12 +78,12 @@ func CheckKeyPair(publicKeyInfoInPrivateKey x509util.PublicKeyInfo, publicKeyInf
 
 	switch publicKeyInfoInPrivateKey.PublicKeyAlgorithm {
 	case x509.RSA:
-		publicKeyInPrivateKey := publicKeyInfoInPrivateKey.Key.(rsa.PublicKey)
+		publicKeyInPrivateKey := publicKeyInfoInPrivateKey.Key.(*rsa.PublicKey)
 		if publicKeyInPrivateKey.Equal(publicKeyInfo.Key) {
 			isValid = true
 		}
 	case x509.ECDSA:
-		publicKeyInfoInPrivateKey := publicKeyInfoInPrivateKey.Key.(ecdsa.PublicKey)
+		publicKeyInfoInPrivateKey := publicKeyInfoInPrivateKey.Key.(*ecdsa.PublicKey)
 		if publicKeyInfoInPrivateKey.Equal(publicKeyInfo.Key) {
 			isValid = true
 		}
