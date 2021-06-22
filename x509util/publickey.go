@@ -85,7 +85,7 @@ func ExtractPublicKeyFromPrivateKey(privateKeyInfo PrivateKeyInfo) (publicKeyInf
 			SourceName:         "Private Key",
 			TypeLabel:          fmt.Sprintf("RSA Public-Key: (%d bit)", publicKey.Size()*8),
 			PublicKeyAlgorithm: x509.RSA,
-			Key:                publicKey,
+			Key:                &publicKey,
 			KeyString:          keyString,
 			Option:             map[string]string{"Exponent": fmt.Sprintf("%d (0x%x)", publicKey.E, publicKey.E)},
 		}
@@ -98,7 +98,7 @@ func ExtractPublicKeyFromPrivateKey(privateKeyInfo PrivateKeyInfo) (publicKeyInf
 			SourceName:         "Private Key",
 			TypeLabel:          fmt.Sprintf("Public-Key: (%d bit)", publicKey.Curve.Params().BitSize),
 			PublicKeyAlgorithm: x509.ECDSA,
-			Key:                publicKey,
+			Key:                &publicKey,
 			KeyString:          keyString,
 			Option:             map[string]string{"NIST CURVE": publicKey.Curve.Params().Name},
 		}

@@ -6,12 +6,51 @@ package checker
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"github.com/ttkzw/go-color"
 )
+
+// output is an io.Writer. It's os.Stdout by default.
+var output io.Writer
+
+func init() {
+	output = os.Stdout
+}
+
+// SetOutput sets the output.
+func SetOutput(w io.Writer) {
+	output = w
+}
+
+// GetOutput gets the output.
+func GetOutput() io.Writer {
+	return output
+}
+
+// Print formats using the default formats for its operands and writes to the specified output.
+// Spaces are added between operands when neither is a string.
+// It returns the number of bytes written and any write error encountered.
+func Print(a ...interface{}) (n int, err error) {
+	return fmt.Fprint(output, a...)
+}
+
+// Printf formats according to a format specifier and writes to the specified output.
+// It returns the number of bytes written and any write error encountered.
+func Printf(format string, a ...interface{}) (n int, err error) {
+	return fmt.Fprintf(output, format, a...)
+}
+
+// Println formats using the default formats for its operands and writes to the specified output.
+// Spaces are always added between operands and a newline is appended.
+// It returns the number of bytes written and any write error encountered.
+func Println(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(output, a...)
+}
 
 // Status is a status code for monitoring.
 type Status int
@@ -96,12 +135,12 @@ func (s State) String() string {
 
 // Print prints a status message.
 func (s State) Print() {
-	fmt.Printf("%s: %s\n", s.Status.ColorString(), s.Message)
+	Printf("%s: %s\n", s.Status.ColorString(), s.Message)
 }
 
 // PrintName prints a checker name.
 func (s State) PrintName() {
-	fmt.Println(color.Orange.Colorize(fmt.Sprintf("[%s]", s.Name)))
+	Println(color.Orange.Colorize(fmt.Sprintf("[%s]", s.Name)))
 }
 
 // StateList is the list of results.
@@ -110,11 +149,11 @@ type StateList []State
 // Print prints results.
 func (list *StateList) Print(verbose int, dnType x509util.DNType) {
 	summaryState := list.Summarize()
-	fmt.Printf("%s: %s\n", summaryState.Status.String(), summaryState.Message)
+	Printf("%s: %s\n", summaryState.Status.String(), summaryState.Message)
 	if verbose == 0 {
 		return
 	}
-	fmt.Println()
+	Println()
 
 	for _, state := range *list {
 		state.PrintName()
@@ -122,18 +161,18 @@ func (list *StateList) Print(verbose int, dnType x509util.DNType) {
 		if verbose > 0 {
 			state.PrintDetails(verbose, dnType)
 		}
-		fmt.Println("")
+		Println("")
 	}
 
 	summaryState.PrintName()
 	summaryState.Print()
 
-	fmt.Println()
+	Println()
 	switch verbose {
 	case 1:
-		fmt.Println("To get more detailed information, use the '-vv' option.")
+		Println("To get more detailed information, use the '-vv' option.")
 	case 2:
-		fmt.Println("To get more detailed information, use the '-vvv' option.")
+		Println("To get more detailed information, use the '-vvv' option.")
 	}
 }
 
@@ -182,7 +221,7 @@ func (list *StateList) Summarize() State {
 
 func printDetailsLine(format string, a ...interface{}) {
 	const indentString = "    "
-	fmt.Print(indentString)
-	fmt.Printf(format, a...)
-	fmt.Printf("\n")
+	Print(indentString)
+	Printf(format, a...)
+	Printf("\n")
 }

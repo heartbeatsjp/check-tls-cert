@@ -5,11 +5,40 @@
 package checker_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
+	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestStatusPrint(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+
+	checker.Print("TEST")
+	assert.Equal("TEST", w.String())
+}
+
+func TestStatusPrintf(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+
+	checker.Printf("TEST: %s", "VALUE")
+	assert.Equal("TEST: VALUE", w.String())
+}
+
+func TestStatusPrintln(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+
+	checker.Println("TEST")
+	assert.Equal("TEST\n", w.String())
+}
 
 func TestStatusCode(t *testing.T) {
 	assert := assert.New(t)
@@ -144,4 +173,15 @@ func TestStateListCode(t *testing.T) {
 
 	stateList = checker.StateList{unknownState, criticalState, warningState, okState}
 	assert.Equal(3, stateList.Code())
+}
+
+func TestStatePrintName(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+
+	serverCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	state := checker.CheckCertificate(serverCert)
+	state.PrintName()
+	assert.Equal(w.String(), "[Certificate]\n")
 }

@@ -5,6 +5,7 @@
 package checker_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
@@ -14,6 +15,8 @@ import (
 
 func TestCheckKeyPair(t *testing.T) {
 	var state checker.State
+	w := strings.Builder{}
+	checker.SetOutput(&w)
 	assert := assert.New(t)
 
 	rsaKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
@@ -44,18 +47,176 @@ func TestCheckKeyPair(t *testing.T) {
 	invalidPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(invalidKeyFile)
 	invalidPublicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(invalidPrivateKeyInfo)
 
+	// CRITICAL: the private key is not paired with a certificate
+	//     Private Key:
+	//         Public Key Algorithm: RSA
+	//             RSA Public-Key: (2048 bit)
+	//             Modulus:
+	//                 00:df:10:ae:dc:d0:2f:c2:8d:c3:09:4a:36:c3:4c:
+	//                 ...(ommited)
+	//             Exponent: 65537 (0x10001)
+	//     Certificate:
+	//         Public Key Algorithm: RSA
+	//             RSA Public-Key: (2048 bit)
+	//             Modulus:
+	//                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
+	//                 ...(ommited)
+	//             Exponent: 65537 (0x10001)
 	state = checker.CheckKeyPair(invalidPublicKeyInfoInPrivateKey, rsaPublicKeyInfo)
-	assert.Equal(checker.CRITICAL, state.Status)
 
+	w.Reset()
+	state.Print()
+	assert.Equal(checker.CRITICAL, state.Status)
+	assert.Contains(w.String(), "CRITICAL: the private key is not paired with a certificate")
+
+	w.Reset()
+	state.PrintDetails(1, x509util.StrictDN)
+	assert.Contains(w.String(), `    Private Key:
+        Public Key Algorithm: RSA
+            RSA Public-Key: (2048 bit)
+            Modulus:`)
+	assert.Contains(w.String(), `    Certificate:
+        Public Key Algorithm: RSA
+            RSA Public-Key: (2048 bit)
+            Modulus:`)
+
+	// CRITICAL: the public key algorithm does not match between the private Key and the certificate
+	//     Private Key:
+	//         Public Key Algorithm: ECDSA
+	//             Public-Key: (256 bit)
+	//             pub:
+	//                 04:36:ee:23:87:98:ba:57:8d:a0:dc:72:40:18:ae:
+	//                 ...(omitted)
+	//             NIST CURVE: P-256
+	//     Certificate:
+	//         Public Key Algorithm: RSA
+	//             RSA Public-Key: (2048 bit)
+	//             Modulus:
+	//                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
+	//                 ...(omitted)
+	//             Exponent: 65537 (0x10001)
 	state = checker.CheckKeyPair(ecdsaPublicKeyInfoInPrivateKey, rsaPublicKeyInfo)
+
+	w.Reset()
+	state.Print()
 	assert.Equal(checker.CRITICAL, state.Status)
+	assert.Contains(w.String(), "CRITICAL: the public key algorithm does not match between the private Key and the certificate")
 
+	w.Reset()
+	state.PrintDetails(1, x509util.StrictDN)
+	assert.Contains(w.String(), `    Private Key:
+        Public Key Algorithm: ECDSA
+            Public-Key: (256 bit)
+            pub:`)
+	assert.Contains(w.String(), `    Certificate:
+        Public Key Algorithm: RSA
+            RSA Public-Key: (2048 bit)
+            Modulus:`)
+
+	// OK: the private key is paired with the certificate
+	//     Private Key:
+	//         Public Key Algorithm: RSA
+	//             RSA Public-Key: (2048 bit)
+	//             Modulus:
+	//                 00:df:10:ae:dc:d0:2f:c2:8d:c3:09:4a:36:c3:4c:
+	//                 ...(ommited)
+	//             Exponent: 65537 (0x10001)
+	//     Certificate:
+	//         Public Key Algorithm: RSA
+	//             RSA Public-Key: (2048 bit)
+	//             Modulus:
+	//                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
+	//                 ...(ommited)
+	//             Exponent: 65537 (0x10001)
 	state = checker.CheckKeyPair(rsaPublicKeyInfoInPrivateKey, rsaPublicKeyInfo)
-	assert.Equal(checker.OK, state.Status)
 
+	w.Reset()
+	state.Print()
+	assert.Equal(checker.OK, state.Status)
+	assert.Contains(w.String(), "OK: the private key is paired with the certificate")
+
+	w.Reset()
+	state.PrintDetails(1, x509util.StrictDN)
+	assert.Contains(w.String(), `    Private Key:
+        Public Key Algorithm: RSA
+            RSA Public-Key: (2048 bit)
+            Modulus:`)
+	assert.Contains(w.String(), `    Certificate:
+        Public Key Algorithm: RSA
+            RSA Public-Key: (2048 bit)
+            Modulus:`)
+
+	w.Reset()
+	state.PrintDetails(2, x509util.StrictDN)
+	assert.Contains(w.String(), `To get the full public key, use the '-vvv' option.`)
+
+	w.Reset()
+	state.PrintDetails(3, x509util.StrictDN)
+	assert.Contains(w.String(), `The public key information can be obtained with the following command:`)
+
+	// OK: the private key is paired with the certificate
+	//     Private Key:
+	//         Public Key Algorithm: ECDSA
+	//             Public-Key: (256 bit)
+	//             pub:
+	//                 04:36:ee:23:87:98:ba:57:8d:a0:dc:72:40:18:ae:
+	//                 ...(omitted)
+	//             NIST CURVE: P-256
+	//     Certificate:
+	//         Public Key Algorithm: ECDSA
+	//             Public-Key: (256 bit)
+	//             pub:
+	//                 04:36:ee:23:87:98:ba:57:8d:a0:dc:72:40:18:ae:
+	//                 ...(omitted)
+	//             NIST CURVE: P-256
 	state = checker.CheckKeyPair(ecdsaPublicKeyInfoInPrivateKey, ecdsaPublicKeyInfo)
-	assert.Equal(checker.OK, state.Status)
 
-	state = checker.CheckKeyPair(ed25519PublicKeyInfoInPrivateKey, ed25519PublicKeyInfo)
+	w.Reset()
+	state.Print()
 	assert.Equal(checker.OK, state.Status)
+	assert.Contains(w.String(), "OK: the private key is paired with the certificate")
+
+	w.Reset()
+	state.PrintDetails(1, x509util.StrictDN)
+	assert.Contains(w.String(), `    Private Key:
+        Public Key Algorithm: ECDSA
+            Public-Key: (256 bit)
+            pub:`)
+	assert.Contains(w.String(), `    Certificate:
+        Public Key Algorithm: ECDSA
+            Public-Key: (256 bit)
+            pub:`)
+
+	// OK: the private key is paired with the certificate
+	//     Private Key:
+	//         Public Key Algorithm: Ed25519
+	//             ED25519 Public-Key:
+	//             pub:
+	//                 1d:84:84:80:3a:4f:0f:9a:d6:c7:77:73:8a:8d:c2:
+	//                 ...(omitted)
+	//     Certificate:
+	//         Public Key Algorithm: Ed25519
+	//             ED25519 Public-Key:
+	//             pub:
+	//                 1d:84:84:80:3a:4f:0f:9a:d6:c7:77:73:8a:8d:c2:
+	//                 ...(omitted)
+	//
+	state = checker.CheckKeyPair(ed25519PublicKeyInfoInPrivateKey, ed25519PublicKeyInfo)
+
+	w.Reset()
+	state.Print()
+	assert.Equal(checker.OK, state.Status)
+	assert.Contains(w.String(), "OK: the private key is paired with the certificate")
+
+	w.Reset()
+	state.PrintDetails(1, x509util.StrictDN)
+	assert.Contains(w.String(), `    Private Key:
+        Public Key Algorithm: Ed25519
+            ED25519 Public-Key:
+            pub:`)
+	assert.Contains(w.String(), `    Certificate:
+        Public Key Algorithm: Ed25519
+            ED25519 Public-Key:
+            pub:`)
+
 }

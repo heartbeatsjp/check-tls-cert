@@ -57,6 +57,11 @@ func CheckCertificateList(certs []*x509.Certificate) State {
 		message = strings.Join(messages, " / ")
 	}
 
+	if len(certInfoList) == 0 {
+		status = CRITICAL
+		message = "no certificate"
+	}
+
 	state := State{
 		Name:         name,
 		Status:       status,

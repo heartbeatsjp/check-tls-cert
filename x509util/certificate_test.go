@@ -66,3 +66,61 @@ func TestParseCertificateFile(t *testing.T) {
 	cert, _ = x509util.ParseCertificateFile(serverCertFile)
 	assert.Equal("CN=server-a.test", cert.Subject.String(), "subject should match")
 }
+
+func TestVerifyValidity(t *testing.T) {
+	var (
+		message string
+		err     error
+	)
+	assert := assert.New(t)
+
+	// This certificate will expire in 365 days.
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certs, _ := x509util.ParseCertificateFiles(certFile)
+	cert := certs[0]
+
+	// This certificate has expired.
+	expiredCertFile := "../test/testdata/pki/cert/expired/server-a-rsa.crt"
+	expiredCerts, _ := x509util.ParseCertificateFiles(expiredCertFile)
+	expiredCert := expiredCerts[0]
+
+	// This certificate is not yet valid.
+	notYetValidCertFile := "../test/testdata/pki/cert/notyetvalid/server-a-rsa.crt"
+	notYetValidCerts, _ := x509util.ParseCertificateFiles(notYetValidCertFile)
+	notYetValidCert := notYetValidCerts[0]
+
+	// the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	message, err = x509util.VerifyValidity(cert, 0)
+	assert.Nil(err)
+	assert.Contains(message, "the certificate will expire in ")
+
+	// the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	message, err = x509util.VerifyValidity(cert, 28)
+	assert.Nil(err)
+	assert.Contains(message, "the certificate will expire in ")
+
+	// the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	_, err = x509util.VerifyValidity(cert, 366)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "the certificate will expire in ")
+
+	// the certificate has expired on 2020-01-01 09:00:00 +0900
+	_, err = x509util.VerifyValidity(expiredCert, 0)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "the certificate has expired on ")
+
+	// the certificate has expired on 2020-01-01 09:00:00 +0900
+	_, err = x509util.VerifyValidity(expiredCert, 10000)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "the certificate has expired on ")
+
+	// the certificate is not yet valid and will be valid on 2035-01-01 09:00:00 +0900
+	_, err = x509util.VerifyValidity(notYetValidCert, 0)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "the certificate is not yet valid and will be valid on ")
+
+	// the certificate is not yet valid and will be valid on 2035-01-01 09:00:00 +0900
+	_, err = x509util.VerifyValidity(notYetValidCert, 10000)
+	assert.NotNil(err)
+	assert.Contains(err.Error(), "the certificate is not yet valid and will be valid on ")
+}
