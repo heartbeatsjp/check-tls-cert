@@ -84,3 +84,6 @@ gen_server_private_key server-c-ed25519 ed25519
 # server-c.test Ed488 Private Key
 gen_server_private_key server-c-ed488 ed488
 
+
+# Intermediate CA A RSA OCSP Responder Private Key
+gen_server_private_key ca-intermediate-a-rsa-ocsp-responder rsa

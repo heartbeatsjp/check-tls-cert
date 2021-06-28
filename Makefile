@@ -43,4 +43,5 @@ prepare-test-once:
 prepare-test-cert:
 	bash scripts/gen-valid-cert.sh &>/dev/null
 	bash scripts/gen-chain-cert.sh &>/dev/null
+	bash scripts/gen-ocsp-cert.sh &>/dev/null
 

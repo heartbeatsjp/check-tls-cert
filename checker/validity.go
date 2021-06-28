@@ -17,8 +17,8 @@ func CheckValidity(cert *x509.Certificate, warning int, critical int) State {
 	const name = "Validity"
 
 	printDetails := func(verbose int, dnType x509util.DNType) {
-		printDetailsLine("Not Before: %s", cert.NotBefore.Local().Format(timeFormat))
-		printDetailsLine("Not After : %s", cert.NotAfter.Local().Format(timeFormat))
+		printDetailsLine(4, "Not Before: %s", cert.NotBefore.Local().Format(timeFormat))
+		printDetailsLine(4, "Not After : %s", cert.NotAfter.Local().Format(timeFormat))
 	}
 
 	var (

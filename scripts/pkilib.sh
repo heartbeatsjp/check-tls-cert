@@ -190,3 +190,43 @@ _lookup_file() {
   fi
 }
 
+_gen_ocsp_responder_cert() {
+  local ca_key_file=$1
+  local ca_cert_file=$2
+  local key_file=$3
+  local csr_file=$4
+  local cert_file=$5
+  local subject=$6
+  local days=$7
+  local startdate=$8
+
+  if [[ -n "${startdate}" ]]; then
+    now=$(date)
+    sudo date -s ${startdate} -u > /dev/null
+  fi
+
+  echo "Creating OCSP Responder Certificate: ${cert_file}"
+  openssl req -new -nodes -key ${key_file} -sha256 -subj "${subject}" -out ${csr_file}
+  openssl x509 -req -in ${csr_file} -days ${days} \
+    -CA ${ca_cert_file} -CAkey ${ca_key_file} -CAcreateserial -sha256 \
+    -extfile <(cat <<EOT
+authorityKeyIdentifier=keyid,issuer
+noCheck=ignored
+extendedKeyUsage=OCSPSigning
+subjectKeyIdentifier=hash
+keyUsage=critical,digitalSignature
+EOT
+) \
+    -out ${cert_file}
+  openssl x509 -in ${cert_file} -noout -startdate -enddate
+  rm ${csr_file}
+  rm ${ca_cert_file%.crt}.srl
+  echo "Done."
+  echo ""
+
+  if [[ -n "${startdate}" ]]; then
+    sudo date -s "${now}" > /dev/null
+    touch ${cert_file}
+  fi
+}
+

@@ -19,48 +19,17 @@ func CheckKeyPair(publicKeyInfoInPrivateKey x509util.PublicKeyInfo, publicKeyInf
 
 	printDetails := func(verbose int, dnType x509util.DNType) {
 		for _, info := range []x509util.PublicKeyInfo{publicKeyInfoInPrivateKey, publicKeyInfo} {
-			printDetailsLine("%s:", info.SourceName)
-			printDetailsLine("    Public Key Algorithm: %s", info.PublicKeyAlgorithm.String())
-
-			printDetailsLine("        %s", info.TypeLabel)
-
-			publicKeyTypeName := "pub"
-			if info.PublicKeyAlgorithm == x509.RSA {
-				publicKeyTypeName = "Modulus"
-			}
-			printDetailsLine("        %s:", publicKeyTypeName)
-
-			if verbose < 2 {
-				printDetailsLine("            %s", info.KeyString[:45])
-				printDetailsLine("            ...(omitted)")
-			} else if verbose >= 2 {
-				const length = 45
-				var line string
-				for i := 0; i < len(info.KeyString); i = i + length {
-					if i+length < len(info.KeyString) {
-						line = info.KeyString[i : i+length]
-
-					} else {
-						line = info.KeyString[i:]
-					}
-					printDetailsLine("            %s", line)
-				}
-			}
-
-			for key, value := range info.Option {
-				printDetailsLine("        %s: %s", key, value)
-			}
+			printPublicKey(info, verbose, 4)
 		}
-
-		printDetailsLine("")
+		printDetailsLine(4, "")
 		if verbose == 2 {
-			printDetailsLine("To get the full public key, use the '-vvv' option.")
+			printDetailsLine(4, "To get the full public key, use the '-vvv' option.")
 		}
 		if verbose >= 3 {
-			printDetailsLine("The public key information can be obtained with the following command:")
-			printDetailsLine("    openssl pkey -in PRIVATE_KEY.pem -noout -text_pub")
-			printDetailsLine("    openssl x509 -in CERTIFICATE.pem -noout -pubkey | openssl pkey -pubin -text_pub -noout")
-			printDetailsLine("    openssl x509 -in CERTIFICATE.pem -noout -text")
+			printDetailsLine(4, "The public key information can be obtained with the following command:")
+			printDetailsLine(4, "    openssl pkey -in PRIVATE_KEY.pem -noout -text_pub")
+			printDetailsLine(4, "    openssl x509 -in CERTIFICATE.pem -noout -pubkey | openssl pkey -pubin -text_pub -noout")
+			printDetailsLine(4, "    openssl x509 -in CERTIFICATE.pem -noout -text")
 		}
 	}
 

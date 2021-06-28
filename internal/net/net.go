@@ -22,9 +22,11 @@ import (
 // Run checks certificates.
 func Run(hostname string, ipAddress string, port uint16, network string, startTLS string, timeout int, rootFile string, warning int, critical int, dnType x509util.DNType, verbose int) (int, error) {
 	var (
-		rootCerts []*x509.Certificate
-		roots     *x509.CertPool
-		err       error
+		rootCerts         []*x509.Certificate
+		intermediateCerts []*x509.Certificate
+		issuerCert        *x509.Certificate
+		roots             *x509.CertPool
+		err               error
 	)
 
 	if rootFile != "" {
@@ -102,8 +104,14 @@ func Run(hostname string, ipAddress string, port uint16, network string, startTL
 	}
 
 	certs := connectionState.PeerCertificates
+
 	serverCert := certs[0]
-	intermediateCerts := certs[1:]
+	if len(certs) >= 2 {
+		intermediateCerts = certs[1:]
+		issuerCert = certs[1]
+	} else {
+		intermediateCerts = []*x509.Certificate{}
+	}
 
 	var stateList checker.StateList
 	stateList = append(stateList, checker.CheckCertificate(serverCert))
@@ -111,6 +119,7 @@ func Run(hostname string, ipAddress string, port uint16, network string, startTL
 	stateList = append(stateList, checker.CheckHostname(hostname, serverCert))
 	stateList = append(stateList, checker.CheckValidity(serverCert, warning, critical))
 	stateList = append(stateList, checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts))
+	stateList = append(stateList, checker.CheckOCSPStapling(issuerCert, connectionState.OCSPResponse))
 	stateList.Print(verbose, dnType)
 	return stateList.Code(), err
 }

@@ -25,7 +25,7 @@ func TestCheckCertificate(t *testing.T) {
 
 	// CN=server-a.test (RSA)
 	//
-	// OK: the certificate information is as follows
+	// INFO: the certificate information is as follows
 	//     Issuer : CN=Intermediate CA A RSA
 	//     Subject: CN=server-a.test
 	//     Subject Alternative Names:
@@ -63,8 +63,8 @@ func TestCheckCertificate(t *testing.T) {
 
 	w.Reset()
 	state.Print()
-	assert.Equal(checker.OK, state.Status)
-	assert.Contains(w.String(), `OK: the certificate information is as follows`)
+	assert.Equal(checker.INFO, state.Status)
+	assert.Contains(w.String(), `INFO: the certificate information is as follows`)
 
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)
@@ -80,7 +80,7 @@ func TestCheckCertificate(t *testing.T) {
 
 	// CN=server-a.test (ECDSA)
 	//
-	// OK: the certificate information is as follows
+	// INFO: the certificate information is as follows
 	//     Issuer : CN=Intermediate CA A RSA
 	//     Subject: CN=server-a.test
 	//     Subject Alternative Names:
@@ -104,8 +104,8 @@ func TestCheckCertificate(t *testing.T) {
 
 	w.Reset()
 	state.Print()
-	assert.Equal(checker.OK, state.Status)
-	assert.Contains(w.String(), `OK: the certificate information is as follows`)
+	assert.Equal(checker.INFO, state.Status)
+	assert.Contains(w.String(), `INFO: the certificate information is as follows`)
 
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)
@@ -121,7 +121,7 @@ func TestCheckCertificate(t *testing.T) {
 
 	// CN=server-a.test (Ed25519)
 	//
-	// OK: the certificate information is as follows
+	// INFO: the certificate information is as follows
 	//     Issuer : CN=Intermediate CA A RSA
 	//     Subject: CN=server-a.test
 	//     Subject Alternative Names:
@@ -142,8 +142,8 @@ func TestCheckCertificate(t *testing.T) {
 
 	w.Reset()
 	state.Print()
-	assert.Equal(checker.OK, state.Status)
-	assert.Contains(w.String(), `OK: the certificate information is as follows`)
+	assert.Equal(checker.INFO, state.Status)
+	assert.Contains(w.String(), `INFO: the certificate information is as follows`)
 
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)

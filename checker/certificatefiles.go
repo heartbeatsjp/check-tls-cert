@@ -29,31 +29,32 @@ func CheckCertificateFiles(certFile string, chainFile string, caFile string, roo
 
 	printDetails := func(verbose int, dnType x509util.DNType) {
 		for _, certFileInfo := range certFileInfoList {
-			printDetailsLine("%s: %s", certFileInfo.Status.ColorString(), certFileInfo.Label)
-			printDetailsLine("    File: %s", certFileInfo.Name)
+			printDetailsLine(4, "%s: %s", certFileInfo.Status.ColorString(), certFileInfo.Label)
+
+			printDetailsLine(8, "File: %s", certFileInfo.Name)
 			if certFileInfo.Message != "" {
 				if certFileInfo.Status == ERROR {
-					printDetailsLine("    Error: %s", certFileInfo.Message)
+					printDetailsLine(8, "Error: %s", certFileInfo.Message)
 				} else {
-					printDetailsLine("    Message: %s", certFileInfo.Message)
+					printDetailsLine(8, "Message: %s", certFileInfo.Message)
 				}
 			}
 			if len(certFileInfo.CertificateInfoList) == 0 {
 				continue
 			}
 
-			printDetailsLine("    Certificate:")
+			printDetailsLine(8, "Certificate:")
 			if !certFileInfo.isRoot {
 				for _, certInfo := range certFileInfo.CertificateInfoList {
-					printDetailsLine("        - %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
-					printDetailsLine("          Subject   : %s", x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
-					printDetailsLine("          Issuer    : %s", x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
-					printDetailsLine("          Expiration: %v", certInfo.Certificate.NotAfter.Local().Format(timeFormat))
+					printDetailsLine(12, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
+					printDetailsLine(12, "  Subject   : %s", x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
+					printDetailsLine(12, "  Issuer    : %s", x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
+					printDetailsLine(12, "  Expiration: %v", certInfo.Certificate.NotAfter.Local().Format(timeFormat))
 					if certInfo.Message != "" {
 						if certInfo.Status == ERROR {
-							printDetailsLine("          Error     : %s", certInfo.Message)
+							printDetailsLine(12, "  Error     : %s", certInfo.Message)
 						} else {
-							printDetailsLine("          Message   : %s", certInfo.Message)
+							printDetailsLine(12, "  Message   : %s", certInfo.Message)
 						}
 					}
 				}
@@ -61,9 +62,9 @@ func CheckCertificateFiles(certFile string, chainFile string, caFile string, roo
 				// Root Certificates File (list only, unverified)
 				const maxCert = 3
 				for i, certInfo := range certFileInfo.CertificateInfoList {
-					printDetailsLine("        - %s", certInfo.CommonName)
+					printDetailsLine(12, "- %s", certInfo.CommonName)
 					if i >= maxCert {
-						printDetailsLine("        - ...(omitted)")
+						printDetailsLine(12, "- ...(omitted)")
 						break
 					}
 				}

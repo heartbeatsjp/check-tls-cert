@@ -30,7 +30,7 @@ It runs the following checks:
 - Hostname
 - Validity
 - Certificate Chains
-
+- OCSP Stapling
 
 ## Checkers
 
@@ -71,6 +71,10 @@ It verifies the digital signature, Subject, Issuer, and expiration date of the c
 
 The certificate chain from the root certificate to the server certificate is checked. Therefore, if the root certificate is not installed on the system, an error will occur.
 By setting the option `--root-file`, you can specify a root certificate file to validate the certificate chain.
+
+### OCSP Stapling Checker
+
+It checks the OCSP response obtained by OCSP stapling.
 
 
 ## Limitations
@@ -179,7 +183,7 @@ $ check-tls-cert file -H server-a.test \
 OK: all checks have been passed
 
 [Certificate]
-OK: the certificate information is as follows
+INFO: the certificate information is as follows
     Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
     Subject Alternative Names:
@@ -275,7 +279,7 @@ $ check-tls-cert net -H server-a.test -vv
 OK: all checks have been passed
 
 [Certificate]
-OK: the certificate information is as follows
+INFO: the certificate information is as follows
     Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
     Subject Alternative Names:
@@ -322,6 +326,21 @@ OK: the certificate chain is valid
             Subject   : CN=server-a.test
             Issuer    : CN=Intermediate CA A RSA
             Expiration: 2022-02-26 10:17:34 +0900
+
+[OCSP Stapling]
+OK: certificate is valid
+    OCSP Response Data:
+        OCSP Response Status: success (0x0)
+        Cert Status: good
+        Produced At: 2021-06-28 06:39:00 +0000 UTC
+        This Update: 2021-06-27 06:39:22 +0000 UTC
+        Next Update: 2021-06-29 06:39:22 +0000 UTC
+    Certificate:
+        Issuer : CN=Intermediate CA A RSA
+        Subject: CN=Intermediate CA A RSA OCSP Responder
+        Validity:
+            Not Before: 2021-06-28 06:23:10 +0000 UTC
+            Not After : 2022-06-28 06:23:10 +0000 UTC
 
 [Summary]
 OK: all checks have been passed

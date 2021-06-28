@@ -104,7 +104,7 @@ func (s Status) ColorString() string {
 		case UNKNOWN:
 			c = color.Orange
 		case INFO:
-			c = color.Orange
+			c = color.Chartreuse
 		case ERROR:
 			c = color.Red
 		}
@@ -219,8 +219,8 @@ func (list *StateList) Summarize() State {
 	return summaryState
 }
 
-func printDetailsLine(format string, a ...interface{}) {
-	const indentString = "    "
+func printDetailsLine(indent int, format string, a ...interface{}) {
+	var indentString = strings.Repeat(" ", indent)
 	Print(indentString)
 	Printf(format, a...)
 	Printf("\n")
