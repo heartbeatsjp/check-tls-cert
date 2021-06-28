@@ -18,24 +18,24 @@ func CheckCertificateChain(serverCert *x509.Certificate, intermediateCerts []*x5
 
 	printDetails := func(verbose int, dnType x509util.DNType) {
 		for _, certInfoInChain := range certInfoInChains {
-			indent := ""
+			indent := 4
 
 			for _, certInfo := range certInfoInChain {
-				printDetailsLine("%s- %s: %s", indent, certInfo.Status.ColorString(), certInfo.CommonName)
+				printDetailsLine(indent, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
 				if certInfo.Certificate != nil {
-					printDetailsLine("%s    Subject   : %v", indent, x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
-					printDetailsLine("%s    Issuer    : %v", indent, x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
-					printDetailsLine("%s    Expiration: %v", indent, certInfo.Certificate.NotAfter.Local().Format(timeFormat))
+					printDetailsLine(indent, "    Subject   : %v", x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
+					printDetailsLine(indent, "    Issuer    : %v", x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
+					printDetailsLine(indent, "    Expiration: %v", certInfo.Certificate.NotAfter.Local().Format(timeFormat))
 				}
 				if certInfo.Message != "" {
 					if certInfo.Status == ERROR {
-						printDetailsLine("%s    Error     : %v", indent, certInfo.Message)
+						printDetailsLine(indent, "    Error     : %v", certInfo.Message)
 					} else {
-						printDetailsLine("%s    Message   : %s", indent, certInfo.Message)
+						printDetailsLine(indent, "    Message   : %s", certInfo.Message)
 					}
 				}
 
-				indent = indent + "  "
+				indent = indent + 2
 			}
 		}
 	}

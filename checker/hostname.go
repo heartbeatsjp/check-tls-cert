@@ -16,11 +16,11 @@ func CheckHostname(hostname string, cert *x509.Certificate) State {
 	const name = "Hostname"
 
 	printDetails := func(verbose int, dnType x509util.DNType) {
-		printDetailsLine("Common Name: %s", cert.Subject.CommonName)
+		printDetailsLine(4, "Common Name: %s", cert.Subject.CommonName)
 		if len(cert.DNSNames) > 0 {
-			printDetailsLine("Subject Alternative Names:")
+			printDetailsLine(4, "Subject Alternative Names:")
 			for _, dnsName := range cert.DNSNames {
-				printDetailsLine("    DNS: %s", dnsName)
+				printDetailsLine(4, "    DNS: %s", dnsName)
 			}
 		}
 	}

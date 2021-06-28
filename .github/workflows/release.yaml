@@ -23,6 +23,7 @@ jobs:
         run: |
           bash scripts/gen-valid-cert.sh
           bash scripts/gen-chain-cert.sh
+          bash scripts/gen-ocsp-cert.sh
           go test -v ./...
 
   release:
