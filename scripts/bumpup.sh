@@ -7,8 +7,9 @@ if [[ $? -ne 0 ]]; then
 fi
 
 git add version/version.go
-version=$(gobump show -r version)
+version=v$(gobump show -r version)
 git commit -m "Release ${version}"
 git tag -a ${version} -m "Release ${version}"
 git push origin ${version}
+git push
 exit

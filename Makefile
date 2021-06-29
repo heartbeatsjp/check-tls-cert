@@ -23,6 +23,10 @@ build-linux:
 clean:
 	go clean
 
+.PHONY: tag
+tag:
+	bash scripts/bumpup.sh
+
 .PHONY: test
 test: prepare-test-cert
 	go test -v ./...
@@ -44,4 +48,3 @@ prepare-test-cert:
 	bash scripts/gen-valid-cert.sh &>/dev/null
 	bash scripts/gen-chain-cert.sh &>/dev/null
 	bash scripts/gen-ocsp-cert.sh &>/dev/null
-
