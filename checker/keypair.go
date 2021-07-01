@@ -22,10 +22,10 @@ func CheckKeyPair(publicKeyInfoInPrivateKey x509util.PublicKeyInfo, publicKeyInf
 			printPublicKey(info, verbose, 4)
 		}
 		printDetailsLine(4, "")
-		if verbose == 2 {
-			printDetailsLine(4, "To get the full public key, use the '-vvv' option.")
+		if verbose == 1 {
+			printDetailsLine(4, "To get the full public key, use the '-vv' option.")
 		}
-		if verbose >= 3 {
+		if verbose >= 2 {
 			printDetailsLine(4, "The public key information can be obtained with the following command:")
 			printDetailsLine(4, "    openssl pkey -in PRIVATE_KEY.pem -noout -text_pub")
 			printDetailsLine(4, "    openssl x509 -in CERTIFICATE.pem -noout -pubkey | openssl pkey -pubin -text_pub -noout")
