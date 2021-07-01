@@ -53,14 +53,14 @@ func TestCheckKeyPair(t *testing.T) {
 	//             RSA Public-Key: (2048 bit)
 	//             Modulus:
 	//                 00:df:10:ae:dc:d0:2f:c2:8d:c3:09:4a:36:c3:4c:
-	//                 ...(ommited)
+	//                 ...(omitted)
 	//             Exponent: 65537 (0x10001)
 	//     Certificate:
 	//         Public Key Algorithm: RSA
 	//             RSA Public-Key: (2048 bit)
 	//             Modulus:
 	//                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
-	//                 ...(ommited)
+	//                 ...(omitted)
 	//             Exponent: 65537 (0x10001)
 	state = checker.CheckKeyPair(invalidPublicKeyInfoInPrivateKey, rsaPublicKeyInfo)
 
@@ -119,14 +119,14 @@ func TestCheckKeyPair(t *testing.T) {
 	//             RSA Public-Key: (2048 bit)
 	//             Modulus:
 	//                 00:df:10:ae:dc:d0:2f:c2:8d:c3:09:4a:36:c3:4c:
-	//                 ...(ommited)
+	//                 ...(omitted)
 	//             Exponent: 65537 (0x10001)
 	//     Certificate:
 	//         Public Key Algorithm: RSA
 	//             RSA Public-Key: (2048 bit)
 	//             Modulus:
 	//                 00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:
-	//                 ...(ommited)
+	//                 ...(omitted)
 	//             Exponent: 65537 (0x10001)
 	state = checker.CheckKeyPair(rsaPublicKeyInfoInPrivateKey, rsaPublicKeyInfo)
 
@@ -147,11 +147,11 @@ func TestCheckKeyPair(t *testing.T) {
             Modulus:`)
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
-	assert.Contains(w.String(), `To get the full public key, use the '-vvv' option.`)
+	state.PrintDetails(1, x509util.StrictDN)
+	assert.Contains(w.String(), `To get the full public key, use the '-vv' option.`)
 
 	w.Reset()
-	state.PrintDetails(3, x509util.StrictDN)
+	state.PrintDetails(2, x509util.StrictDN)
 	assert.Contains(w.String(), `The public key information can be obtained with the following command:`)
 
 	// OK: the private key is paired with the certificate

@@ -174,12 +174,12 @@ OK: all checks have been passed
 
 #### Detailed output of each check result
 
-To get the details of each check result, use the '-vv' option.
+To get the details of each check result, use the '-v' option.
 
 ```
 $ check-tls-cert file -H server-a.test \
     -k test/testdata/pki/private/server-a-rsa.key \
-    -f test/testdata/pki/chain/fullchain-a-rsa.pem -vv
+    -f test/testdata/pki/chain/fullchain-a-rsa.pem -v
 OK: all checks have been passed
 
 [Certificate]
@@ -224,7 +224,7 @@ OK: the private key is paired with the certificate
                 ...(omitted)
             Exponent: 65537 (0x10001)
     
-    To get the full public key, use the '-vvv' option.
+    To get the full public key, use the '-vv' option.
 
 [Hostname]
 OK: the hostname 'server-a.test' is valid for the certificate
@@ -256,7 +256,7 @@ OK: the certificate chain is valid
 [Summary]
 OK: all checks have been passed
 
-To get more detailed information, use the '-vvv' option.
+To get more detailed information, use the '-vv' option.
 ```
 
 ### net command
@@ -272,10 +272,10 @@ OK: all checks have been passed
 
 #### Detailed output of each check result
 
-To get the details of each check result, use the '-vv' option.
+To get the details of each check result, use the '-v' option.
 
 ```
-$ check-tls-cert net -H server-a.test -vv
+$ check-tls-cert net -H server-a.test -v
 OK: all checks have been passed
 
 [Certificate]
@@ -345,10 +345,11 @@ OK: certificate is valid
 [Summary]
 OK: all checks have been passed
 
-To get more detailed information, use the '-vvv' option.
+To get more detailed information, use the '-vv' option.
 ```
 
 ## LICENSE
 
 Copyright 2021 HEARTBEATS Corporation. All rights reserved.
+
 Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
