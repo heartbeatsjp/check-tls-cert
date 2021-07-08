@@ -116,12 +116,13 @@ Usage:
   check-tls-cert file [flags]
 
 Flags:
-      --ca-file file        trusted CA certificates file. It includes intermediate certificates and a root certificate. Used for the ssl_trusted_certificate directive in nginx and the SSLCACertificateFile directive in Apache HTTP Server.
-  -f, --cert-file file      certificates file. It includes a server certificate and intermediate certificates. (required)
-  -C, --chain-file file     certificate chain file. It includes intermediate certificates. Used for the SSLCertificateChainFile directive in old Apache HTTP Server.
-  -h, --help                help for file
-  -H, --hostname hostname   hostname for verifying certificate. (required)
-  -k, --key-file file       private key file. (required)
+      --ca-file file         trusted CA certificates file. It includes intermediate certificates and a root certificate. Used for the ssl_trusted_certificate directive in nginx and the SSLCACertificateFile directive in Apache HTTP Server.
+  -f, --cert-file file       certificates file. It includes a server certificate and intermediate certificates. (required)
+  -C, --chain-file file      certificate chain file. It includes intermediate certificates. Used for the SSLCertificateChainFile directive in old Apache HTTP Server.
+  -h, --help                 help for file
+  -H, --hostname hostname    hostname for verifying certificate. (required)
+  -k, --key-file file        private key file. (required)
+  -P, --password-file file   password file for the private key file if the private key file is encrypted. If it is not specified, you will be prompted to enter the password.
 
 Global Flags:
   -c, --critical days    critical threshold in days before expiration date (default 14)
