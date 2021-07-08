@@ -6,16 +6,25 @@ package file
 
 import (
 	"crypto/x509"
+	"os"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
 // Run checks certificates.
-func Run(hostname string, keyFile string, certFile string, chainFile string, rootFile string, caFile string, warning int, critical int, dnType x509util.DNType, verbose int) (int, error) {
+func Run(hostname string, keyFile string, certFile string, chainFile string, rootFile string, caFile string, passwordFile string, warning int, critical int, dnType x509util.DNType, verbose int) (int, error) {
 	var err error
+	var password []byte
 
-	privateKeyInfo, err := x509util.ParsePrivateKeyFile(keyFile)
+	if len(passwordFile) > 0 {
+		password, err = os.ReadFile(passwordFile)
+		if err != nil {
+			return checker.UNKNOWN.Code(), err
+		}
+	}
+
+	privateKeyInfo, err := x509util.ParsePrivateKeyFile(keyFile, password)
 	if err != nil {
 		return checker.UNKNOWN.Code(), err
 	}
