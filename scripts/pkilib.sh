@@ -32,8 +32,19 @@ _gen_ca_private_key() {
 _gen_server_private_key() {
   local key_file=$1
   local algo=$2
+  local cipher=$3
+  local pass_file=$4
 
   traditional_key_file=${key_file%.key}-traditional.key
+
+  if [[ -n ${cipher} ]]; then
+    cipher=-${cipher}
+    encrypted_key_file=${key_file%.key}-encrypted.key
+    traditional_encrypted_key_file=${traditional_key_file%.key}-encrypted.key
+  fi
+  if [[ -n ${pass_file} ]]; then
+    passoutopt="-passout file:${pass_file}"
+  fi
 
   echo "Creating Private Key: ${key_file}"
 
@@ -43,20 +54,40 @@ _gen_server_private_key() {
       openssl genpkey -out ${key_file} -algorithm RSA -pkeyopt rsa_keygen_bits:2048
       echo "openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}"
       openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}
+      if [[ -n ${cipher} ]]; then
+        echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
+        openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
+        echo "openssl pkey -in ${key_file} -traditional -out ${traditional_encrypted_key_file} ${cipher} ${passoutopt}"
+        openssl pkey -in ${key_file} -traditional -out ${traditional_encrypted_key_file} ${cipher} ${passoutopt}
+      fi
       ;;
     "ecdsa")
       echo "openssl genpkey -out ${key_file} -algorithm EC -pkeyopt ec_paramgen_curve:prime256v1"
       openssl genpkey -out ${key_file} -algorithm EC -pkeyopt ec_paramgen_curve:prime256v1
       echo "openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}"
       openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}
+      if [[ -n ${cipher} ]]; then
+        echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
+        openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
+        echo "openssl pkey -in ${key_file} -traditional -out ${traditional_encrypted_key_file} ${cipher} ${passoutopt}"
+        openssl pkey -in ${key_file} -traditional -out ${traditional_encrypted_key_file} ${cipher} ${passoutopt}
+      fi
       ;;
     "ed25519")
       echo "openssl genpkey -out ${key_file} -algorithm ED25519"
       openssl genpkey -out ${key_file} -algorithm ED25519
+      if [[ -n ${cipher} ]]; then
+        echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
+        openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
+      fi
       ;;
     "ed488")
       echo "openssl genpkey -out ${key_file} -algorithm ED448"
       openssl genpkey -out ${key_file} -algorithm ED448
+      if [[ -n ${cipher} ]]; then
+        echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
+        openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
+      fi
       ;;
     *)
       echo "Unknown algorithm"

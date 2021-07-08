@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	keyFile   string
-	certFile  string
-	chainFile string
-	caFile    string
+	keyFile      string
+	certFile     string
+	chainFile    string
+	caFile       string
+	passwordFile string
 
 	fileCmd = &cobra.Command{
 		Use:   "file",
@@ -32,8 +33,9 @@ var (
 			certFile, _ = homedir.Expand(certFile)
 			chainFile, _ = homedir.Expand(chainFile)
 			rootFile, _ = homedir.Expand(rootFile)
+			passwordFile, _ = homedir.Expand(passwordFile)
 
-			code, err := file.Run(hostname, keyFile, certFile, chainFile, rootFile, caFile, warning, critical, dntype, verbose)
+			code, err := file.Run(hostname, keyFile, certFile, chainFile, rootFile, caFile, passwordFile, warning, critical, dntype, verbose)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err.Error())
 			}
@@ -52,6 +54,7 @@ func init() {
 	fileCmd.MarkFlagRequired("cert-file")
 	fileCmd.Flags().StringVarP(&chainFile, "chain-file", "C", "", "certificate chain `file`. It includes intermediate certificates. Used for the SSLCertificateChainFile directive in old Apache HTTP Server.")
 	fileCmd.Flags().StringVar(&caFile, "ca-file", "", "trusted CA certificates `file`. It includes intermediate certificates and a root certificate. Used for the ssl_trusted_certificate directive in nginx and the SSLCACertificateFile directive in Apache HTTP Server.")
+	fileCmd.Flags().StringVarP(&passwordFile, "password-file", "P", "", "password `file` for the private key if the private key file is ecrypted. If it is not specified, you will be prompted for a password.")
 
 	rootCmd.AddCommand(fileCmd)
 }

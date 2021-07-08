@@ -11,7 +11,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"os"
+
+	"github.com/youmark/pkcs8"
+	"golang.org/x/term"
 )
 
 // PrivateKeyInfo describes the information of a private key.
@@ -21,19 +25,50 @@ type PrivateKeyInfo struct {
 }
 
 // ParsePrivateKeyFile parses a private key file in PEM format and returns a private key.
-func ParsePrivateKeyFile(keyFile string) (privateKeyInfo PrivateKeyInfo, err error) {
-	block, err := readPrivateKeyFile(keyFile)
+func ParsePrivateKeyFile(keyFile string, password []byte) (privateKeyInfo PrivateKeyInfo, err error) {
+	block, isEncrypted, err := readPrivateKeyFile(keyFile)
 	if err != nil {
 		return
 	}
 
+	if isEncrypted {
+		for len(password) == 0 {
+			fmt.Printf("Enter password for %s: ", keyFile)
+			password, err = term.ReadPassword(int(os.Stdin.Fd()))
+			fmt.Println()
+			if err != nil {
+				return
+			}
+			if len(password) > 0 {
+				break
+			}
+			fmt.Println("ERROR: password is empty")
+		}
+	}
+
+	var der = block.Bytes
+
 	switch block.Type {
 	case "RSA PRIVATE KEY":
-		privateKeyInfo, err = parsePKCS1PrivateKey(block.Bytes)
+		if isEncrypted {
+			//lint:ignore SA1019 Encrypted PEM filea are still used.
+			if der, err = x509.DecryptPEMBlock(block, password); err != nil {
+				return
+			}
+		}
+		privateKeyInfo, err = parsePKCS1PrivateKey(der)
 	case "EC PRIVATE KEY":
-		privateKeyInfo, err = parseECPrivateKey(block.Bytes)
+		if isEncrypted {
+			//lint:ignore SA1019 Encrypted PEM filea are still used.
+			if der, err = x509.DecryptPEMBlock(block, password); err != nil {
+				return
+			}
+		}
+		privateKeyInfo, err = parseECPrivateKey(der)
 	case "PRIVATE KEY":
-		privateKeyInfo, err = parsePKCS8PrivateKey(block.Bytes)
+		privateKeyInfo, err = parsePKCS8PrivateKey(der, false, nil)
+	case "ENCRYPTED PRIVATE KEY":
+		privateKeyInfo, err = parsePKCS8PrivateKey(der, true, password)
 	default:
 		// If the key file is of an unknown type, readPrivateKeyFile() will fail and it will not reach here.
 		//lint:ignore ST1005 "Private Key" is a component name.
@@ -43,7 +78,7 @@ func ParsePrivateKeyFile(keyFile string) (privateKeyInfo PrivateKeyInfo, err err
 	return
 }
 
-func readPrivateKeyFile(keyFile string) (block *pem.Block, err error) {
+func readPrivateKeyFile(keyFile string) (block *pem.Block, isEncrypted bool, err error) {
 	var pemData, rest []byte
 
 	if pemData, err = os.ReadFile(keyFile); err != nil {
@@ -57,10 +92,17 @@ func readPrivateKeyFile(keyFile string) (block *pem.Block, err error) {
 
 		switch block.Type {
 		case "RSA PRIVATE KEY":
+			//lint:ignore SA1019 Encrypted PEM files are still used.
+			isEncrypted = x509.IsEncryptedPEMBlock(block)
 			return
 		case "EC PRIVATE KEY":
+			//lint:ignore SA1019 Encrypted PEM files are still used.
+			isEncrypted = x509.IsEncryptedPEMBlock(block)
 			return
 		case "PRIVATE KEY":
+			return
+		case "ENCRYPTED PRIVATE KEY":
+			isEncrypted = true
 			return
 		default:
 		}
@@ -97,14 +139,21 @@ func parseECPrivateKey(der []byte) (privateKeyInfo PrivateKeyInfo, err error) {
 	return
 }
 
-func parsePKCS8PrivateKey(der []byte) (privateKeyInfo PrivateKeyInfo, err error) {
+func parsePKCS8PrivateKey(der []byte, isEncrypted bool, password []byte) (privateKeyInfo PrivateKeyInfo, err error) {
 	var (
 		privateKey interface{}
 		algo       x509.PublicKeyAlgorithm
 	)
 
-	if privateKey, err = x509.ParsePKCS8PrivateKey(der); err != nil {
-		return
+	if isEncrypted {
+		if privateKey, err = pkcs8.ParsePKCS8PrivateKey(der, password); err != nil {
+			return
+		}
+	} else {
+		if privateKey, err = x509.ParsePKCS8PrivateKey(der); err != nil {
+			return
+		}
+
 	}
 
 	switch privateKey.(type) {

@@ -20,7 +20,7 @@ func TestCheckKeyPair(t *testing.T) {
 	assert := assert.New(t)
 
 	rsaKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
-	rsaPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(rsaKeyFile)
+	rsaPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(rsaKeyFile, nil)
 	rsaPublicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(rsaPrivateKeyInfo)
 
 	rsaCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
@@ -28,7 +28,7 @@ func TestCheckKeyPair(t *testing.T) {
 	rsaPublicKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(rsaCerts[0])
 
 	ecdsaKeyFile := "../test/testdata/pki/private/server-a-ecdsa.key"
-	ecdsaPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(ecdsaKeyFile)
+	ecdsaPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(ecdsaKeyFile, nil)
 	ecdsaPublicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(ecdsaPrivateKeyInfo)
 
 	ecdsaCertFile := "../test/testdata/pki/cert/valid/server-a-ecdsa.crt"
@@ -36,7 +36,7 @@ func TestCheckKeyPair(t *testing.T) {
 	ecdsaPublicKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(ecdsaCerts[0])
 
 	ed25519KeyFile := "../test/testdata/pki/private/server-a-ed25519.key"
-	ed25519PrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(ed25519KeyFile)
+	ed25519PrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(ed25519KeyFile, nil)
 	ed25519PublicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(ed25519PrivateKeyInfo)
 
 	ed25519CertFile := "../test/testdata/pki/cert/valid/server-a-ed25519.crt"
@@ -44,7 +44,7 @@ func TestCheckKeyPair(t *testing.T) {
 	ed25519PublicKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(ed25519Certs[0])
 
 	invalidKeyFile := "../test/testdata/pki/private/server-b-rsa.key"
-	invalidPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(invalidKeyFile)
+	invalidPrivateKeyInfo, _ := x509util.ParsePrivateKeyFile(invalidKeyFile, nil)
 	invalidPublicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(invalidPrivateKeyInfo)
 
 	// CRITICAL: the private key is not paired with a certificate

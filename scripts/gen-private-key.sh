@@ -19,10 +19,15 @@ gen_ca_private_key() {
 gen_server_private_key() {
   local name=$1
   local algo=$2
+  local cipher=$3
+  local pass_file=$4
 
   key_file=${PRIVATE_KEY_DIR}/${name}.key
+  if [[ -n ${pass_file} ]]; then
+    pass_file=${PRIVATE_KEY_DIR}/${pass_file}
+  fi
 
-  _gen_server_private_key ${key_file} ${algo}
+  _gen_server_private_key ${key_file} ${algo} ${cipher} ${pass_file}
 }
 
 
@@ -46,17 +51,17 @@ gen_ca_private_key ca-intermediate-b-rsa rsa
 gen_ca_private_key ca-intermediate-ecdsa ecdsa
 
 
-# server-a.test RSA Private Key
-gen_server_private_key server-a-rsa rsa
+# server-a.test RSA Private Key and Encrypted Key
+gen_server_private_key server-a-rsa rsa aes-128-cbc password.txt
 
-# server-a.test ECDSA Private Key
-gen_server_private_key server-a-ecdsa ecdsa
+# server-a.test ECDSA Private Key and Encrypted Key
+gen_server_private_key server-a-ecdsa ecdsa aes-128-cbc password.txt
 
-# server-a.test Ed25519 Private Key
-gen_server_private_key server-a-ed25519 ed25519
+# server-a.test Ed25519 Private Key and Encrypted Key
+gen_server_private_key server-a-ed25519 ed25519 aes-128-cbc password.txt
 
-# server-a.test Ed488 Private Key
-gen_server_private_key server-a-ed488 ed488
+# server-a.test Ed488 Private Key and Encrypted Key
+gen_server_private_key server-a-ed488 ed488 aes-128-cbc password.txt
 
 
 # server-b.test RSA Private Key
