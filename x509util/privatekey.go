@@ -5,6 +5,7 @@
 package x509util
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
@@ -174,4 +175,15 @@ func parsePKCS8PrivateKey(der []byte, isEncrypted bool, password []byte) (privat
 		Key:                privateKey,
 	}
 	return
+}
+
+// ReadPasswordFile reads the password from the password file.
+func ReadPasswordFile(passwordFile string) ([]byte, error) {
+	password, err := os.ReadFile(passwordFile)
+	if err != nil {
+		return nil, err
+	}
+
+	password = bytes.TrimRight(password, "\n\r")
+	return password, nil
 }
