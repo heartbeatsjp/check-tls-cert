@@ -6,7 +6,6 @@ package file
 
 import (
 	"crypto/x509"
-	"os"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
@@ -18,7 +17,7 @@ func Run(hostname string, keyFile string, certFile string, chainFile string, roo
 	var password []byte
 
 	if len(passwordFile) > 0 {
-		password, err = os.ReadFile(passwordFile)
+		password, err = x509util.ReadPasswordFile(passwordFile)
 		if err != nil {
 			return checker.UNKNOWN.Code(), err
 		}

@@ -6,7 +6,6 @@ package x509util_test
 
 import (
 	"crypto/x509"
-	"os"
 	"testing"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
@@ -21,7 +20,7 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	password, _ := os.ReadFile("../test/testdata/pki/private/password.txt")
+	password, _ := x509util.ReadPasswordFile("../test/testdata/pki/private/password.txt")
 
 	/*
 	 * Misc.
