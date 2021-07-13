@@ -7,7 +7,6 @@ package checker
 import (
 	"crypto/x509"
 	"encoding/asn1"
-	"log"
 
 	"github.com/heartbeatsjp/check-tls-cert/ocsputil"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
@@ -54,7 +53,6 @@ func CheckOCSPResponder(targetCert *x509.Certificate, issuer *x509.Certificate) 
 	)
 
 	ocspServer, ocspResponse, err := ocsputil.GetOCSPResponse(targetCert, issuer)
-	log.Printf("response=%v", ocspResponse)
 	responseInfo.Server = ocspServer
 	if ocspResponse != nil {
 		if issuer != nil {
