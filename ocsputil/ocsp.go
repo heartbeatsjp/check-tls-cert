@@ -30,6 +30,7 @@ type OCSPResponseInfo struct {
 	ResponseStatus ocsp.ResponseStatus
 }
 
+// CertificateStatus is an OCSP certificate status.
 type CertificateStatus int
 
 const (
@@ -52,7 +53,7 @@ func (c CertificateStatus) String() string {
 	if 0 <= i && i < len(certificateStatusString) {
 		return certificateStatusString[i]
 	}
-	return "unknown certificate status value " + strconv.Itoa(i)
+	return "unknown OCSP certificate status value " + strconv.Itoa(i)
 }
 
 var certificateStatusMessage = [...]string{
@@ -66,9 +67,10 @@ func (c CertificateStatus) Message() string {
 	if 0 <= i && i < len(certificateStatusMessage) {
 		return certificateStatusMessage[i]
 	}
-	return "OCSP unknown certificate status"
+	return "unknown OCSP certificate status"
 }
 
+// CRLReasonCode is a CRL reason code.
 type CRLReasonCode int
 
 const (
