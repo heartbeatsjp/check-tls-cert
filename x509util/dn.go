@@ -1,6 +1,6 @@
 // Copyright 2011, 2021 The Go Authors and HEARTBEATS Corporation. All rights reserved.
 // Use of this source code is governed by a BSD-style
-// license that can be
+// license that can be found in the LICENSE file.
 
 // This package is a modification of the crypto.x509.pkix package.
 // See also:
