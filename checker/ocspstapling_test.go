@@ -34,7 +34,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 	priv := privateKeyInfo.Key.(*rsa.PrivateKey)
 
 	// no response, no issuer
-	state = checker.CheckOCSPStapling(nil, []byte{})
+	state = checker.CheckOCSPStapling(nil, []byte{}, true)
 	assert.Equal(checker.INFO, state.Status)
 	assert.Equal("no response sent", state.Message)
 	w.Reset()
@@ -42,12 +42,20 @@ func TestCheckOCSPStapling(t *testing.T) {
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
 	// no response
-	state = checker.CheckOCSPStapling(issuerCert, []byte{})
+	state = checker.CheckOCSPStapling(issuerCert, []byte{}, true)
 	assert.Equal(checker.INFO, state.Status)
 	assert.Equal("no response sent", state.Message)
 	w.Reset()
 	state.Print()
 	assert.Equal(w.String(), "INFO: no response sent\n")
+
+	// no response
+	state = checker.CheckOCSPStapling(issuerCert, []byte{}, false)
+	assert.Equal(checker.WARNING, state.Status)
+	assert.Equal("ocsp: no response sent", state.Message)
+	w.Reset()
+	state.Print()
+	assert.Equal(w.String(), "WARNING: ocsp: no response sent\n")
 
 	// Response status: good
 	// OK: certificate is valid
@@ -78,7 +86,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(issuerCert, response)
+	state = checker.CheckOCSPStapling(issuerCert, response, true)
 	assert.Equal(checker.OK, state.Status)
 	assert.Equal("certificate is valid", state.Message)
 
@@ -89,7 +97,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)
 	assert.Contains(w.String(), `    OCSP Response Data:
-        OCSP Response Status: success (0x0)
+        OCSP Response Status: successful (0x0)
         Cert Status: good
 `)
 	assert.Contains(w.String(), `    Certificate:
@@ -131,7 +139,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:       time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(issuerCert, response)
+	state = checker.CheckOCSPStapling(issuerCert, response, true)
 	assert.Equal(checker.CRITICAL, state.Status)
 	assert.Equal("certificate has been deliberately revoked", state.Message)
 
@@ -142,7 +150,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)
 	assert.Contains(w.String(), `    OCSP Response Data:
-        OCSP Response Status: success (0x0)
+        OCSP Response Status: successful (0x0)
         Cert Status: revoked
 `)
 	assert.Contains(w.String(), `        Revocation Time: `)
@@ -182,7 +190,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(issuerCert, response)
+	state = checker.CheckOCSPStapling(issuerCert, response, true)
 	assert.Equal(checker.CRITICAL, state.Status)
 	assert.Equal("OCSP responder doesn't know about the certificate", state.Message)
 
@@ -193,7 +201,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)
 	assert.Contains(w.String(), `    OCSP Response Data:
-        OCSP Response Status: success (0x0)
+        OCSP Response Status: successful (0x0)
         Cert Status: unknown
 `)
 	assert.Contains(w.String(), `    Certificate:
