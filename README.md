@@ -31,6 +31,7 @@ It runs the following checks:
 - Validity
 - Certificate Chains
 - OCSP Stapling
+- OCSP Responder
 
 ## Checkers
 
@@ -75,6 +76,25 @@ By setting the option `--root-file`, you can specify a root certificate file to 
 ### OCSP Stapling Checker
 
 It checks the OCSP response obtained by OCSP stapling.
+
+You can set one of the options `--ocsp as-is`, `--ocsp stapling`, or `--ocsp fallback` to run this checker.
+
+With the option `--ocsp as-is` (by default), if there is no OCSP response, the status will be "INFO".
+
+With the option `--ocsp stapling`, if there is no OCSP response, it will retry the TLS connection up to two times every second. If there is still no OCSP response, the status will be "WARNING". The reason for retrying is that there may be no OCSP response immediately after starting the web server.
+
+With the option `--ocsp fallback`, if there is no OCSP response, the OCSP Responder Checker will be executed.
+
+
+### OCSP Responder Checker
+
+Experimental: It checks the OCSP response from an OCSP responder.
+
+You can set either the `--ocsp responder` or the `--ocsp fallback` option to run this checker.
+
+Known issues:
+
+- Requests to some OCSP responders and responses from some OCSP responders will fail. Therefore, "INFO" is returned as the status instead of "WARNING" or "CRITICAL". 
 
 
 ## Limitations
@@ -144,6 +164,7 @@ Flags:
   -h, --help                 help for net
   -H, --hostname hostname    hostname for verifying certificate
   -I, --ip-address address   IP address
+      --ocsp type            OCSP checker type. 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
   -p, --port number          port number (default 443)
       --starttls type        STARTTLS type. 'smtp', 'pop3, or 'imap'
   -t, --timeout seconds      connection timeout in seconds (default 10)

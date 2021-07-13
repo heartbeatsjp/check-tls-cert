@@ -7,15 +7,16 @@ package checker
 import (
 	"crypto/x509"
 	"encoding/asn1"
+	"log"
 
 	"github.com/heartbeatsjp/check-tls-cert/ocsputil"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"golang.org/x/crypto/ocsp"
 )
 
-// CheckOCSPStapling checks the response from OCSP Stapling.
-func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonReponse bool) State {
-	const name = "OCSP Stapling"
+// CheckOCSPResponder checks the response from OCSP Responder.
+func CheckOCSPResponder(targetCert *x509.Certificate, issuer *x509.Certificate) State {
+	const name = "OCSP Responder"
 
 	var responseInfo ocsputil.OCSPResponseInfo
 
@@ -23,6 +24,8 @@ func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonRe
 		if responseInfo.Response == nil || responseInfo.ResponseStatus == ocsputil.NoResponseStatus {
 			return
 		}
+
+		printDetailsLine(4, "OCSP Responder: %s", responseInfo.Server)
 
 		printDetailsLine(4, "OCSP Response Data:")
 		printDetailsLine(4, "    OCSP Response Status: %s (0x%x)", ocsputil.ResponseStatus(responseInfo.ResponseStatus).String(), int(responseInfo.ResponseStatus))
@@ -50,18 +53,29 @@ func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonRe
 		message string
 	)
 
-	if len(ocspResponse) > 0 {
+	ocspServer, ocspResponse, err := ocsputil.GetOCSPResponse(targetCert, issuer)
+	log.Printf("response=%v", ocspResponse)
+	responseInfo.Server = ocspServer
+	if ocspResponse != nil {
 		if issuer != nil {
-			response, err := ocsp.ParseResponse(ocspResponse, issuer)
+			response, err := ocsp.ParseResponseForCert(ocspResponse, targetCert, issuer)
 			responseInfo.Response = response
 			if err == nil {
-				if response.Status == ocsp.Good {
-					status = OK
-				} else {
-					status = CRITICAL
+				if response.Certificate != nil {
+					if err := response.CheckSignatureFrom(issuer); err != nil {
+						status = CRITICAL
+						message = err.Error()
+					}
 				}
-				message = ocsputil.CertificateStatus(response.Status).Message()
-				responseInfo.ResponseStatus = ocsp.Success
+				if status != CRITICAL {
+					if response.Status == ocsp.Good {
+						status = OK
+					} else {
+						status = CRITICAL
+					}
+					message = ocsputil.CertificateStatus(response.Status).Message()
+					responseInfo.ResponseStatus = ocsp.Success
+				}
 			} else {
 				switch e := err.(type) {
 				case ocsp.ResponseError:
@@ -74,7 +88,7 @@ func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonRe
 					responseInfo.ResponseStatus = ocsputil.NoResponseStatus
 				case asn1.StructuralError:
 					status = INFO
-					message = "ocsp: unsupported OCSP response format"
+					message = "unsupported OCSP response format"
 					responseInfo.ResponseStatus = ocsputil.NoResponseStatus
 				default:
 					status = INFO
@@ -86,14 +100,12 @@ func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonRe
 			status = CRITICAL
 			message = "ocsp: no issuer certificate sent"
 		}
+	} else if err != nil {
+		status = INFO
+		message = "ocsp: " + err.Error()
 	} else {
-		if allowNonReponse {
-			status = INFO
-			message = "no response sent"
-		} else {
-			status = WARNING
-			message = "ocsp: no response sent"
-		}
+		status = INFO
+		message = "ocsp: no valid OCSP responders"
 	}
 
 	state := State{
