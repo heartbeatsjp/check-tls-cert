@@ -167,6 +167,14 @@ func (r ResponseStatus) Message() string {
 func GetOCSPResponse(cert *x509.Certificate, issuer *x509.Certificate) (string, []byte, error) {
 	var err error
 
+	if cert == nil {
+		return "", nil, errors.New("no server certificate")
+	}
+
+	if issuer == nil {
+		return "", nil, errors.New("no issuer certificate")
+	}
+
 	if len(cert.OCSPServer) == 0 {
 		return "", nil, errors.New("no OCSP server in certificate")
 	}
@@ -192,8 +200,10 @@ func GetOCSPResponse(cert *x509.Certificate, issuer *x509.Certificate) (string, 
 		var req *http.Request
 
 		if len(encodedOCSPRequest) < 255 {
-			u, _ := url.Parse(server)
-			u.Path = encodedOCSPRequest
+			if !strings.HasSuffix(server, "/") {
+				server = server + "/"
+			}
+			u, _ := url.Parse(server + encodedOCSPRequest)
 			req, err = http.NewRequest("GET", u.String(), nil)
 			if err != nil {
 				continue
