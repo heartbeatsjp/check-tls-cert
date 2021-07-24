@@ -24,16 +24,15 @@ func TestCheckOCSPResponder(t *testing.T) {
 	checker.SetOutput(&w)
 	assert := assert.New(t)
 
-	network := "tcp4"
-	addr := "heartbeats.jp:443"
+	hostname := "heartbeats.jp"
 	tlsConfig := tls.Config{
-		ServerName:             "heartbeats.jp",
+		ServerName:             hostname,
 		InsecureSkipVerify:     true,
 		SessionTicketsDisabled: true,
 	}
 
 	dialer := net.Dialer{Timeout: time.Second * time.Duration(5)}
-	conn, _ := tls.DialWithDialer(&dialer, network, addr, &tlsConfig)
+	conn, _ := tls.DialWithDialer(&dialer, "tcp4", hostname+":443", &tlsConfig)
 	defer conn.Close()
 	connectionState := conn.ConnectionState()
 	certs := connectionState.PeerCertificates

@@ -92,9 +92,11 @@ Experimental: It checks the OCSP response from an OCSP responder.
 
 You can set either the `--ocsp responder` or the `--ocsp fallback` option to run this checker.
 
-Known issues:
+If the status of the certificate is "good", the status will be "OK".
+If the status of the certificate is "revoked" or "unknown", the staus will be "CRITICAL".
 
-- Requests to some OCSP responders and responses from some OCSP responders will fail. Therefore, "INFO" is returned as the status instead of "WARNING" or "CRITICAL". 
+If the response has an error and the response error is "unauthorized", the status will be "CRITICAL".
+If the response error is others, the status will be "UNKNOWN".
 
 
 ## Limitations
