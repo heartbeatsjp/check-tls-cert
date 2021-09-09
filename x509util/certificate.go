@@ -31,6 +31,9 @@ func ParseCertificateFiles(certFiles ...string) (certs []*x509.Certificate, err 
 	for len(pemData) > 0 {
 		block, rest := pem.Decode(pemData)
 		pemData = rest
+		if block == nil {
+			break
+		}
 
 		cert, err := x509.ParseCertificate(block.Bytes)
 		if err != nil {
