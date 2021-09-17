@@ -104,7 +104,7 @@ If the response error is others, the status will be "UNKNOWN".
 ### OS
 
 Only UNIX-like operating systems such as Linux and macOS are supported.
-Windows is not supported, because the system root certificate pool is not available on Windows in Golang 1.16.
+Windows is not supported, because the system root certificate pool is not available on Windows in Golang 1.17.
 
 ### Encoding format for certificates and private keys
 
