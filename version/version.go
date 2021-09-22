@@ -5,4 +5,4 @@
 package version
 
 // Version describe a version number.
-const Version = "0.4.3"
+const Version = "0.5.0"
