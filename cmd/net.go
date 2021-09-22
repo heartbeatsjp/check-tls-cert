@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"os"
@@ -16,13 +17,14 @@ import (
 )
 
 var (
-	ipAddress  string
-	port       uint16
-	useIPv4    bool
-	useIPv6    bool
-	startTLS   string
-	ocspOption string
-	timeout    int
+	ipAddress    string
+	port         uint16
+	useIPv4      bool
+	useIPv6      bool
+	tlsMinVerStr string
+	startTLS     string
+	ocspOption   string
+	timeout      int
 
 	netCmd = &cobra.Command{
 		Use:   "net",
@@ -41,13 +43,19 @@ var (
 				os.Exit(checker.UNKNOWN.Code())
 			}
 
+			tlsMinVersion, err := parseTLSMinVersion(tlsMinVerStr)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err.Error())
+				os.Exit(checker.UNKNOWN.Code())
+			}
+
 			ocspoption, err := parseOCSPOption(ocspOption)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err.Error())
 				os.Exit(checker.UNKNOWN.Code())
 			}
 
-			code, err := net.Run(hostname, ipAddress, port, network, startTLS, ocspoption, timeout, rootFile, warning, critical, dntype, verbose)
+			code, err := net.Run(hostname, ipAddress, port, network, tlsMinVersion, startTLS, ocspoption, timeout, rootFile, warning, critical, dntype, verbose)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err.Error())
 			}
@@ -65,10 +73,27 @@ func init() {
 	netCmd.Flags().BoolVarP(&useIPv4, "use-ipv4", "4", false, "use IPv4")
 	netCmd.Flags().BoolVarP(&useIPv6, "use-ipv6", "6", false, "use IPv6")
 	netCmd.Flags().StringVar(&startTLS, "starttls", "", "STARTTLS `type`. 'smtp', 'pop3, or 'imap'")
+	netCmd.Flags().StringVar(&tlsMinVerStr, "tls-min-version", "1.0", "TLS minimum `version`. '1.0', '1.1', '1.2', or '1.3'")
 	netCmd.Flags().StringVar(&ocspOption, "ocsp", "as-is", "OCSP checker `type`. 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental.")
 	netCmd.Flags().IntVarP(&timeout, "timeout", "t", 10, "connection timeout in `seconds`")
 
 	rootCmd.AddCommand(netCmd)
+}
+
+func parseTLSMinVersion(str string) (tlsMinVersion uint16, err error) {
+	switch str {
+	case "1.0":
+		tlsMinVersion = tls.VersionTLS10
+	case "1.1":
+		tlsMinVersion = tls.VersionTLS11
+	case "1.2":
+		tlsMinVersion = tls.VersionTLS12
+	case "1.3":
+		tlsMinVersion = tls.VersionTLS13
+	default:
+		err = errors.New("unknown TLS version in '--tls-min-version' option")
+	}
+	return tlsMinVersion, err
 }
 
 func parseOCSPOption(option string) (net.OCSPOption, error) {

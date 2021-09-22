@@ -163,15 +163,16 @@ Usage:
   check-tls-cert net [flags]
 
 Flags:
-  -h, --help                 help for net
-  -H, --hostname hostname    hostname for verifying certificate
-  -I, --ip-address address   IP address
-      --ocsp type            OCSP checker type. 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
-  -p, --port number          port number (default 443)
-      --starttls type        STARTTLS type. 'smtp', 'pop3, or 'imap'
-  -t, --timeout seconds      connection timeout in seconds (default 10)
-  -4, --use-ipv4             use IPv4
-  -6, --use-ipv6             use IPv6
+  -h, --help                      help for net
+  -H, --hostname hostname         hostname for verifying certificate
+  -I, --ip-address address        IP address
+      --ocsp type                 OCSP checker type. 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
+  -p, --port number               port number (default 443)
+      --starttls type             STARTTLS type. 'smtp', 'pop3, or 'imap'
+  -t, --timeout seconds           connection timeout in seconds (default 10)
+      --tls-min-version version   TLS minimum version. '1.0', '1.1', '1.2', or '1.3' (default "1.0")
+  -4, --use-ipv4                  use IPv4
+  -6, --use-ipv6                  use IPv6
 
 Global Flags:
   -c, --critical days    critical threshold in days before expiration date (default 14)

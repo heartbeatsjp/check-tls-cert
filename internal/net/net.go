@@ -36,7 +36,7 @@ const (
 )
 
 // Run checks certificates.
-func Run(hostname string, ipAddress string, port uint16, network string, startTLS string, ocspOption OCSPOption, timeout int, rootFile string, warning int, critical int, dnType x509util.DNType, verbose int) (int, error) {
+func Run(hostname string, ipAddress string, port uint16, network string, tlsMinVersion uint16, startTLS string, ocspOption OCSPOption, timeout int, rootFile string, warning int, critical int, dnType x509util.DNType, verbose int) (int, error) {
 	var (
 		rootCerts []*x509.Certificate
 		roots     *x509.CertPool
@@ -60,6 +60,7 @@ func Run(hostname string, ipAddress string, port uint16, network string, startTL
 		ServerName:             hostname,
 		InsecureSkipVerify:     true,
 		SessionTicketsDisabled: true,
+		MinVersion:             tlsMinVersion,
 	}
 
 	addr := fmt.Sprintf("%s:%d", hostname, port)
