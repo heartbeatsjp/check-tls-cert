@@ -1,5 +1,7 @@
 # check-tls-cert
 
+## OVERVIEW
+
 Check-tls-cert is a TLS certificate checker.
 
 Check-tls-cert checks the validity of certificates and certificate chains.
@@ -7,7 +9,7 @@ Check-tls-cert checks the validity of certificates and certificate chains.
 Check-tls-cert has two commands, 'file' and 'net'. The 'file' command checks TLS certificate files and a private key. The 'net' command connects to a server and checks a TLS certificate.
 
 
-## file command
+### file command
 
 The 'file' command checks TLS certificate files and a private key.
 
@@ -20,7 +22,7 @@ It runs the following checks:
 - Certificate Chains
 
 
-## net command
+### net command
 
 The 'net' command connects to a server and checks a TLS certificate. It supports STARTTLS.
 
@@ -33,7 +35,21 @@ It runs the following checks:
 - OCSP Stapling
 - OCSP Responder
 
-## Checkers
+## INSTALL
+
+You can install check-tls-cert in the following way:
+
+```
+go install github.com/heartbeatsjp/check-tls-cert@latest
+```
+
+You can download the binary file of check-tls-cert from the following page:
+
+- https://github.com/heartbeatsjp/check-tls-cert/releases
+
+Note: Only binaries for Linux and macOS are available.
+
+## CHECKERS
 
 ### Certificate Files Checker
 
@@ -99,7 +115,7 @@ If the response has an error and the response error is "unauthorized", the statu
 If the response error is others, the status will be "UNKNOWN".
 
 
-## Limitations
+## LIMITATIONS
 
 ### OS
 
@@ -127,7 +143,7 @@ Only the uncompressed form of ECDSA is supported.
 These are due to limitations of Golang.
 
 
-## Usage
+## USAGE
 
 ### file command
 
@@ -182,7 +198,7 @@ Global Flags:
   -w, --warning days     warning threshold in days before expiration date (default 28)
 ```
 
-## Example of execution
+## EXAMPLE OF EXECUTION
 
 ### file command
 
