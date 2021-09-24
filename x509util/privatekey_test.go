@@ -26,17 +26,30 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	 * Misc.
 	 */
 
+	// non-existent file
 	privateKeyFile = "../test/testdata/pki/misc/non-existent.key"
 	_, err = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
 	assert.NotNil(err)
 
+	// empty file
 	privateKeyFile = "../test/testdata/pki/misc/empty.key"
 	_, err = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
 	assert.NotNil(err)
 
+	// invalid format file
 	privateKeyFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
 	_, err = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
 	assert.NotNil(err)
+
+	// no EOL
+	privateKeyFile = "../test/testdata/pki/private/misc-no-eol.key"
+	privateKeyInfo, _ = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
+	assert.Equal(x509.RSA, privateKeyInfo.PublicKeyAlgorithm)
+
+	// Explanatory Text
+	privateKeyFile = "../test/testdata/pki/private/misc-explanatory-text.key"
+	privateKeyInfo, _ = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
+	assert.Equal(x509.RSA, privateKeyInfo.PublicKeyAlgorithm)
 
 	/*
 	 * RSA

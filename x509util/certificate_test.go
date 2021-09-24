@@ -14,57 +14,95 @@ import (
 
 func TestParseCertificateFiles(t *testing.T) {
 	var (
-		certs []*x509.Certificate
-		err   error
+		serverCertFile, chainCertFile string
+		certs                         []*x509.Certificate
+		err                           error
 	)
 	assert := assert.New(t)
 
-	nonExistentFile := "../test/testdata/pki/misc/non-existent.crt"
-	_, err = x509util.ParseCertificateFiles(nonExistentFile)
-	assert.NotNil(err, "file should not exist: %s", nonExistentFile)
+	chainCertFile = "../test/testdata/pki/chain/chain-a-rsa.pem"
 
-	emptyFile := "../test/testdata/pki/misc/empty.crt"
-	_, err = x509util.ParseCertificateFiles(emptyFile)
-	assert.NotNil(err, "file should not be a certificate: %s", emptyFile)
+	// non-existent file
+	serverCertFile = "../test/testdata/pki/misc/non-existent.crt"
+	_, err = x509util.ParseCertificateFiles(serverCertFile)
+	assert.NotNil(err)
 
-	invalidFile := "../test/testdata/pki/private/server-a-rsa.key"
-	_, err = x509util.ParseCertificateFiles(invalidFile)
-	assert.NotNil(err, "file should not be a certificate: %s", invalidFile)
+	// empty file
+	serverCertFile = "../test/testdata/pki/misc/empty.crt"
+	_, err = x509util.ParseCertificateFiles(serverCertFile)
+	assert.NotNil(err)
 
-	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	// invalid format file
+	serverCertFile = "../test/testdata/pki/private/server-a-rsa.key"
+	_, err = x509util.ParseCertificateFiles(serverCertFile)
+	assert.NotNil(err)
+
+	// valid file
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
 	certs, _ = x509util.ParseCertificateFiles(serverCertFile)
-	assert.Equal(1, len(certs), "a number of certificates should be 1")
-	assert.Equal("CN=server-a.test", certs[0].Subject.String(), "subject should match")
+	assert.Equal(1, len(certs))
+	assert.Equal("CN=server-a.test", certs[0].Subject.String())
 
-	chainCertFile := "../test/testdata/pki/chain/chain-a-rsa.pem"
+	// valid file with chain certificate file
 	certs, _ = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
-	assert.Equal(2, len(certs), "a number of certificates should be 2")
-	assert.Equal("CN=server-a.test", certs[0].Subject.String(), "subject should match")
-	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String(), "subject should match")
+	assert.Equal(2, len(certs))
+	assert.Equal("CN=server-a.test", certs[0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
+
+	// no EOL
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.crt"
+	certs, _ = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	assert.Equal(2, len(certs))
+	assert.Equal("CN=server-a.test", certs[0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
+
+	// Explanatory Text
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.crt"
+	certs, _ = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	assert.Equal(2, len(certs))
+	assert.Equal("CN=server-a.test", certs[0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
+
 }
 
 func TestParseCertificateFile(t *testing.T) {
 	var (
-		cert *x509.Certificate
-		err  error
+		serverCertFile string
+		cert           *x509.Certificate
+		err            error
 	)
 	assert := assert.New(t)
 
-	nonExistentFile := "../test/testdata/pki/misc/non-existent.crt"
-	_, err = x509util.ParseCertificateFile(nonExistentFile)
+	// non-existent file
+	serverCertFile = "../test/testdata/pki/misc/non-existent.crt"
+	_, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.NotNil(err)
 
-	emptyFile := "../test/testdata/pki/misc/empty.crt"
-	_, err = x509util.ParseCertificateFile(emptyFile)
+	// empty file
+	serverCertFile = "../test/testdata/pki/misc/empty.crt"
+	_, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.NotNil(err)
 
-	invalidFile := "../test/testdata/pki/private/server-a-rsa.key"
-	_, err = x509util.ParseCertificateFile(invalidFile)
-	assert.NotNil(err, "file should not be a certificate: %s", invalidFile)
+	// invalid format file
+	serverCertFile = "../test/testdata/pki/private/server-a-rsa.key"
+	_, err = x509util.ParseCertificateFile(serverCertFile)
+	assert.NotNil(err, "file should not be a certificate: %s", serverCertFile)
 
-	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	// valid file
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
 	cert, _ = x509util.ParseCertificateFile(serverCertFile)
-	assert.Equal("CN=server-a.test", cert.Subject.String(), "subject should match")
+	assert.Equal("CN=server-a.test", cert.Subject.String())
+
+	// no EOL
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.crt"
+	cert, _ = x509util.ParseCertificateFile(serverCertFile)
+	assert.Equal("CN=server-a.test", cert.Subject.String())
+
+	// Explanatory Text
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.crt"
+	cert, _ = x509util.ParseCertificateFile(serverCertFile)
+	assert.Equal("CN=server-a.test", cert.Subject.String())
+
 }
 
 func TestVerifyValidity(t *testing.T) {
