@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 0.5.1 (2021-09-24)
+
+### Fixed
+
+- If the post-encapsulation boundarythere in PEM file does not have EOL, an error will occur.
+
 ## 0.5.0 (2021-09-22)
 
 ### Feature
