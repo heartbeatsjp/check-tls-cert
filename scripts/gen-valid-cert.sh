@@ -87,3 +87,12 @@ gen_server_cert ca-intermediate-ecdsa server-c-ed25519 "server-c.test" 365
 # server-c.test (Ed488)
 gen_server_cert ca-intermediate-ecdsa server-c-ed488 "server-c.test" 365
 
+
+# variables PEM format
+# No EOL
+cat ${CERT_DIR}/server-a-rsa.crt | awk '!/-----END/ {print} /-----END/ {printf("%s", $0)}' > ${CERT_DIR}/misc-no-eol.crt 
+
+# Explanatory Text
+echo "Pre Explanatory Text" > ${CERT_DIR}/misc-explanatory-text.crt
+cat ${CERT_DIR}/server-a-rsa.crt >> ${CERT_DIR}/misc-explanatory-text.crt
+echo "Post Explanatory Text" >> ${CERT_DIR}/misc-explanatory-text.crt

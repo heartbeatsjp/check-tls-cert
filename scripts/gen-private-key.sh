@@ -92,3 +92,13 @@ gen_server_private_key server-c-ed488 ed488
 
 # Intermediate CA A RSA OCSP Responder Private Key
 gen_server_private_key ca-intermediate-a-rsa-ocsp-responder rsa
+
+
+# variables PEM format
+# No EOL
+cat ${PRIVATE_KEY_DIR}/server-a-rsa.key | awk '!/-----END/ {print} /-----END/ {printf("%s", $0)}' > ${PRIVATE_KEY_DIR}/misc-no-eol.key
+
+# Explanatory Text
+echo "Pre Explanatory Text" > ${PRIVATE_KEY_DIR}/misc-explanatory-text.key
+cat ${PRIVATE_KEY_DIR}/server-a-rsa.key >> ${PRIVATE_KEY_DIR}/misc-explanatory-text.key
+echo "Post Explanatory Text" >> ${PRIVATE_KEY_DIR}/misc-explanatory-text.key

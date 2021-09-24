@@ -5,6 +5,7 @@
 package x509util
 
 import (
+	"bytes"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -23,6 +24,9 @@ func ParseCertificateFiles(certFiles ...string) (certs []*x509.Certificate, err 
 			buf, err := os.ReadFile(certFile)
 			if err != nil {
 				return nil, err
+			}
+			if !bytes.HasSuffix(buf, []byte{'\n'}) {
+				buf = append(buf, '\n')
 			}
 			pemData = append(pemData, buf...)
 		}
