@@ -389,6 +389,11 @@ OK: all checks have been passed
 To get more detailed information, use the '-vv' option.
 ```
 
+### Shell completions
+`check-tls-cert completion` subcommand generates the autocompletion script for shells.
+
+See `check-tls-cert completion bash/zsh/fish --help` to load them.
+
 ## LICENSE
 
 Copyright 2021 HEARTBEATS Corporation. All rights reserved.

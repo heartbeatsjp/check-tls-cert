@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/spf13/cobra v1.1.3
+	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
 	github.com/ttkzw/go-color v0.1.2
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
