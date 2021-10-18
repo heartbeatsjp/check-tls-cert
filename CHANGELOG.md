@@ -1,10 +1,20 @@
 # ChangeLog
 
+## 0.6.0 (2021-10-18)
+
+### Feature
+
+- Add shell completion [#26]
+
+### Fixed
+
+- Verify the certificate of the OCSP authorized responder [#28]
+
 ## 0.5.1 (2021-09-24)
 
 ### Fixed
 
-- If the post-encapsulation boundarythere in PEM file does not have EOL, an error will occur.
+- If the post-encapsulation boundary in PEM file does not have EOL, an error will occur.
 
 ## 0.5.0 (2021-09-22)
 
