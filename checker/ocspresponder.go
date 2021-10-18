@@ -14,7 +14,7 @@ import (
 )
 
 // CheckOCSPResponder checks the response from OCSP Responder.
-func CheckOCSPResponder(targetCert *x509.Certificate, issuer *x509.Certificate) State {
+func CheckOCSPResponder(targetCert *x509.Certificate, issuer *x509.Certificate, intermediateCerts, rootCerts []*x509.Certificate) State {
 	const name = "OCSP Responder"
 
 	var responseInfo ocsputil.OCSPResponseInfo
@@ -78,6 +78,14 @@ func CheckOCSPResponder(targetCert *x509.Certificate, issuer *x509.Certificate) 
 					}
 					message = ocsputil.CertificateStatus(response.Status).Message()
 					responseInfo.ResponseStatus = ocsp.Success
+				}
+
+				if response.Certificate != nil {
+					err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuer, intermediateCerts, rootCerts)
+					if err != nil {
+						status = CRITICAL
+						message = "ocsp: OCSP response signer's certificate error: " + err.Error()
+					}
 				}
 			} else {
 				switch e := err.(type) {

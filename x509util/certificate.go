@@ -86,3 +86,36 @@ func VerifyValidity(cert *x509.Certificate, days int) (message string, err error
 	}
 	return
 }
+
+// GetRootCertPool retrieves the root certificate pool.
+// If root certificates are provided, return a certificate pool for them.
+// If root certificates are not provided, return the system certificate pool.
+func GetRootCertPool(rootCerts []*x509.Certificate) (*x509.CertPool, error) {
+	var (
+		roots *x509.CertPool
+		err   error
+	)
+
+	if len(rootCerts) > 0 {
+		roots = x509.NewCertPool()
+		for _, cert := range rootCerts {
+			roots.AddCert(cert)
+		}
+	} else {
+		roots, err = x509.SystemCertPool()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return roots, nil
+}
+
+// GetIntermediateCertPool retrieves an intermediate certificate pool.
+func GetIntermediateCertPool(intermediateCerts []*x509.Certificate) *x509.CertPool {
+	intermediates := x509.NewCertPool()
+	for _, cert := range intermediateCerts {
+		intermediates.AddCert(cert)
+	}
+	return intermediates
+}

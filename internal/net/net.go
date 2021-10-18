@@ -50,7 +50,7 @@ func Run(hostname string, ipAddress string, port uint16, network string, tlsMinV
 		}
 	}
 
-	roots, err = getRootCertPool(rootCerts)
+	roots, err = x509util.GetRootCertPool(rootCerts)
 	if err != nil {
 		return checker.UNKNOWN.Code(), err
 	}
@@ -82,7 +82,7 @@ func Run(hostname string, ipAddress string, port uint16, network string, tlsMinV
 
 	switch ocspOption {
 	case OCSPAsIs:
-		stateList = append(stateList, checker.CheckOCSPStapling(connectionStateInfo.IssuerCertificate(), connectionStateInfo.OCSPResponse, true))
+		stateList = append(stateList, checker.CheckOCSPStapling(connectionStateInfo.OCSPResponse, connectionStateInfo.IssuerCertificate(), connectionStateInfo.IntermediateCertificates(), rootCerts, true))
 	case OCSPStapling:
 		ocspResponse := connectionStateInfo.OCSPResponse
 		for i := 0; i < 2; i++ {
@@ -96,40 +96,19 @@ func Run(hostname string, ipAddress string, port uint16, network string, tlsMinV
 			}
 			ocspResponse = connectionStateInfo.OCSPResponse
 		}
-		stateList = append(stateList, checker.CheckOCSPStapling(connectionStateInfo.IssuerCertificate(), ocspResponse, false))
+		stateList = append(stateList, checker.CheckOCSPStapling(connectionStateInfo.OCSPResponse, connectionStateInfo.IssuerCertificate(), connectionStateInfo.IntermediateCertificates(), rootCerts, false))
 	case OCSPResponder:
-		stateList = append(stateList, checker.CheckOCSPResponder(connectionStateInfo.ServerCertificate(), connectionStateInfo.IssuerCertificate()))
+		stateList = append(stateList, checker.CheckOCSPResponder(connectionStateInfo.ServerCertificate(), connectionStateInfo.IssuerCertificate(), connectionStateInfo.IntermediateCertificates(), rootCerts))
 	case OCSPFallback:
 		if len(connectionStateInfo.OCSPResponse) > 0 {
-			stateList = append(stateList, checker.CheckOCSPStapling(connectionStateInfo.IssuerCertificate(), connectionStateInfo.OCSPResponse, true))
+			stateList = append(stateList, checker.CheckOCSPStapling(connectionStateInfo.OCSPResponse, connectionStateInfo.IssuerCertificate(), connectionStateInfo.IntermediateCertificates(), rootCerts, true))
 		} else {
-			stateList = append(stateList, checker.CheckOCSPResponder(connectionStateInfo.ServerCertificate(), connectionStateInfo.IssuerCertificate()))
+			stateList = append(stateList, checker.CheckOCSPResponder(connectionStateInfo.ServerCertificate(), connectionStateInfo.IssuerCertificate(), connectionStateInfo.IntermediateCertificates(), rootCerts))
 		}
 	}
 
 	stateList.Print(verbose, dnType)
 	return stateList.Code(), err
-}
-
-func getRootCertPool(rootCerts []*x509.Certificate) (*x509.CertPool, error) {
-	var (
-		roots *x509.CertPool
-		err   error
-	)
-
-	if len(rootCerts) > 0 {
-		roots = x509.NewCertPool()
-		for _, cert := range rootCerts {
-			roots.AddCert(cert)
-		}
-	} else {
-		roots, err = x509.SystemCertPool()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return roots, nil
 }
 
 type ConnectionStateInfo struct {

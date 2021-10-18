@@ -14,7 +14,7 @@ import (
 )
 
 // CheckOCSPStapling checks the response from OCSP Stapling.
-func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonReponse bool) State {
+func CheckOCSPStapling(ocspResponse []byte, issuer *x509.Certificate, intermediateCerts, rootCerts []*x509.Certificate, allowNonReponse bool) State {
 	const name = "OCSP Stapling"
 
 	var responseInfo ocsputil.OCSPResponseInfo
@@ -62,6 +62,14 @@ func CheckOCSPStapling(issuer *x509.Certificate, ocspResponse []byte, allowNonRe
 				}
 				message = ocsputil.CertificateStatus(response.Status).Message()
 				responseInfo.ResponseStatus = ocsp.Success
+
+				if response.Certificate != nil {
+					err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuer, intermediateCerts, rootCerts)
+					if err != nil {
+						status = CRITICAL
+						message = "ocsp: OCSP response signer's certificate error: " + err.Error()
+					}
+				}
 			} else {
 				switch e := err.(type) {
 				case ocsp.ResponseError:
