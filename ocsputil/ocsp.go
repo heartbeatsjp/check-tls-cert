@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"golang.org/x/crypto/ocsp"
 )
 
@@ -53,7 +54,7 @@ func (c CertificateStatus) String() string {
 	if 0 <= i && i < len(certificateStatusString) {
 		return certificateStatusString[i]
 	}
-	return "unknown OCSP certificate status value " + strconv.Itoa(i)
+	return "unknown OCSP certificate status: " + strconv.Itoa(i)
 }
 
 var certificateStatusMessage = [...]string{
@@ -67,7 +68,7 @@ func (c CertificateStatus) Message() string {
 	if 0 <= i && i < len(certificateStatusMessage) {
 		return certificateStatusMessage[i]
 	}
-	return "unknown OCSP certificate status"
+	return "unknown OCSP certificate status: " + strconv.Itoa(i)
 }
 
 // CRLReasonCode is a CRL reason code.
@@ -109,7 +110,7 @@ func (c CRLReasonCode) String() string {
 	case ocsp.AACompromise:
 		return "aACompromise"
 	default:
-		return "unknown CRL reason code " + strconv.Itoa(int(c))
+		return "unknown CRL reason code: " + strconv.Itoa(int(c))
 	}
 }
 
@@ -230,4 +231,45 @@ func GetOCSPResponse(cert *x509.Certificate, issuer *x509.Certificate) (string, 
 	}
 
 	return server, ocspResponse, err
+}
+
+// VerifyAuthorizedResponder verifies the certificate of the authorized responder.
+func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermediateCerts, rootCerts []*x509.Certificate) error {
+	if responderCert == nil {
+		return nil
+	}
+
+	// See RFC 6969 4.2.2.2. Authorized Responders
+	if responderCert.Equal(issuer) {
+		// valid
+	} else if issuer.Subject.String() == responderCert.Issuer.String() {
+		incompatibleKeyUsage := true
+		for _, usage := range responderCert.ExtKeyUsage {
+			if usage == x509.ExtKeyUsageOCSPSigning {
+				incompatibleKeyUsage = false
+			}
+		}
+		if incompatibleKeyUsage {
+			return errors.New("certificate specifies an incompatible key usage")
+		}
+		if err := responderCert.CheckSignatureFrom(issuer); err != nil {
+			return errors.New("signer's certificate does not issued by target certificate's issuer")
+		}
+	} else {
+		return errors.New("invalid certificate")
+	}
+
+	roots, err := x509util.GetRootCertPool(rootCerts)
+	if err != nil {
+		return err
+	}
+	intermediates := x509util.GetIntermediateCertPool(intermediateCerts)
+
+	opts := x509.VerifyOptions{
+		Intermediates: intermediates,
+		Roots:         roots,
+		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
+	}
+	_, err = responderCert.Verify(opts)
+	return err
 }

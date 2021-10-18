@@ -43,6 +43,7 @@ prepare-test-once:
 	bash scripts/gen-root-ca-cert.sh &>/dev/null
 	bash scripts/gen-expired-cert.sh &>/dev/null
 	bash scripts/gen-not-yet-valid-cert.sh &>/dev/null
+	bash scripts/gen-expired-ocsp-cert.sh &>/dev/null
 
 prepare-test-cert:
 	bash scripts/gen-valid-cert.sh &>/dev/null

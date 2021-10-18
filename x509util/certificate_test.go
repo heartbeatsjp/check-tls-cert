@@ -162,3 +162,31 @@ func TestVerifyValidity(t *testing.T) {
 	assert.NotNil(err)
 	assert.Contains(err.Error(), "the certificate is not yet valid and will be valid on ")
 }
+
+func TestGetRootCertPool(t *testing.T) {
+	var (
+		roots *x509.CertPool
+		err   error
+	)
+	assert := assert.New(t)
+
+	certFile := "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt"
+	certs, _ := x509util.ParseCertificateFiles(certFile)
+	roots, err = x509util.GetRootCertPool(certs)
+	assert.Nil(err)
+	assert.Equal(certs[0].RawSubject, roots.Subjects()[0])
+}
+
+func TestGetIntermediateCertPool(t *testing.T) {
+	var (
+		intermediates *x509.CertPool
+		err           error
+	)
+	assert := assert.New(t)
+
+	certFile := "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt"
+	certs, _ := x509util.ParseCertificateFiles(certFile)
+	intermediates = x509util.GetIntermediateCertPool(certs)
+	assert.Nil(err)
+	assert.Equal(certs[0].RawSubject, intermediates.Subjects()[0])
+}

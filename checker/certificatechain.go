@@ -101,19 +101,12 @@ func CheckCertificateChain(serverCert *x509.Certificate, intermediateCerts []*x5
 }
 
 func getCertificateChains(serverCert *x509.Certificate, intermediateCerts []*x509.Certificate, rootCerts []*x509.Certificate) (chains [][]*x509.Certificate, err error) {
-	var roots *x509.CertPool
-
-	if len(rootCerts) > 0 {
-		roots = x509.NewCertPool()
-		for _, cert := range rootCerts {
-			roots.AddCert(cert)
-		}
+	roots, err := x509util.GetRootCertPool(rootCerts)
+	if err != nil {
+		return nil, err
 	}
 
-	intermediates := x509.NewCertPool()
-	for _, cert := range intermediateCerts {
-		intermediates.AddCert(cert)
-	}
+	intermediates := x509util.GetIntermediateCertPool(intermediateCerts)
 
 	opts := x509.VerifyOptions{
 		Intermediates: intermediates,
@@ -127,7 +120,10 @@ func getCertificateChains(serverCert *x509.Certificate, intermediateCerts []*x50
 		var chain []*x509.Certificate
 		chain = append(chain, serverCert)
 		chain = append(chain, intermediateCerts...)
-		rootCert := getRootCertificate(intermediateCerts, rootCerts)
+		rootCert, err := getRootCertificate(intermediateCerts, rootCerts)
+		if err != nil {
+			return nil, err
+		}
 		if rootCert != nil {
 			chain = append(chain, rootCert)
 		}
@@ -136,17 +132,10 @@ func getCertificateChains(serverCert *x509.Certificate, intermediateCerts []*x50
 	return chains, err
 }
 
-func getRootCertificate(intermediateCerts []*x509.Certificate, rootCerts []*x509.Certificate) *x509.Certificate {
-	var (
-		roots    *x509.CertPool
-		rootCert *x509.Certificate
-	)
-
-	if len(rootCerts) > 0 {
-		roots = x509.NewCertPool()
-		for _, cert := range rootCerts {
-			roots.AddCert(cert)
-		}
+func getRootCertificate(intermediateCerts []*x509.Certificate, rootCerts []*x509.Certificate) (rootCert *x509.Certificate, err error) {
+	roots, err := x509util.GetRootCertPool(rootCerts)
+	if err != nil {
+		return nil, err
 	}
 
 	opts := x509.VerifyOptions{
@@ -164,5 +153,5 @@ func getRootCertificate(intermediateCerts []*x509.Certificate, rootCerts []*x509
 			}
 		}
 	}
-	return rootCert
+	return rootCert, nil
 }

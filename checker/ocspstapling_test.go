@@ -6,6 +6,7 @@ package checker_test
 
 import (
 	"crypto/rsa"
+	"crypto/x509"
 	"strings"
 	"testing"
 	"time"
@@ -30,11 +31,13 @@ func TestCheckOCSPStapling(t *testing.T) {
 	responderCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa-ocsp-responder.crt")
 	issuerCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	targetCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	intermediateCerts := []*x509.Certificate{issuerCert}
+	rootCerts, _ := x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root.pem")
 
 	priv := privateKeyInfo.Key.(*rsa.PrivateKey)
 
 	// no response, no issuer
-	state = checker.CheckOCSPStapling(nil, []byte{}, true)
+	state = checker.CheckOCSPStapling([]byte{}, nil, intermediateCerts, rootCerts, true)
 	assert.Equal(checker.INFO, state.Status)
 	assert.Equal("no response sent", state.Message)
 	w.Reset()
@@ -42,7 +45,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
 	// no response
-	state = checker.CheckOCSPStapling(issuerCert, []byte{}, true)
+	state = checker.CheckOCSPStapling([]byte{}, issuerCert, intermediateCerts, rootCerts, true)
 	assert.Equal(checker.INFO, state.Status)
 	assert.Equal("no response sent", state.Message)
 	w.Reset()
@@ -50,7 +53,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
 	// no response
-	state = checker.CheckOCSPStapling(issuerCert, []byte{}, false)
+	state = checker.CheckOCSPStapling([]byte{}, issuerCert, intermediateCerts, rootCerts, false)
 	assert.Equal(checker.WARNING, state.Status)
 	assert.Equal("ocsp: no response sent", state.Message)
 	w.Reset()
@@ -86,7 +89,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(issuerCert, response, true)
+	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCerts, true)
 	assert.Equal(checker.OK, state.Status)
 	assert.Equal("certificate is valid", state.Message)
 
@@ -139,7 +142,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:       time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(issuerCert, response, true)
+	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCerts, true)
 	assert.Equal(checker.CRITICAL, state.Status)
 	assert.Equal("certificate has been deliberately revoked", state.Message)
 
@@ -190,7 +193,7 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(issuerCert, response, true)
+	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCerts, true)
 	assert.Equal(checker.CRITICAL, state.Status)
 	assert.Equal("OCSP responder doesn't know about the certificate", state.Message)
 
@@ -210,4 +213,54 @@ func TestCheckOCSPStapling(t *testing.T) {
         Validity:
 `)
 
+	// expired certificate
+	// Response status: good
+	// CRITICAL: ocsp: OCSP response signer's certificate error: x509: certificate has expired or is not yet valid: current time 2021-06-27T21:39:00+09:00 is after 2020-01-01T00:00:00Z
+	//     OCSP Response Data:
+	//         OCSP Response Status: success (0x0)
+	//         Cert Status: good
+	//         Produced At: 2021-06-28 06:39:00 +0000 UTC
+	//         This Update: 2021-06-27 06:39:22 +0000 UTC
+	//         Next Update: 2021-06-29 06:39:22 +0000 UTC
+	//     Certificate:
+	//         Issuer : CN=Intermediate CA A RSA
+	//         Subject: CN=Intermediate CA A RSA OCSP Responder
+	//         Validity:
+	//             Not Before: 2019-01-01 00:00:00 +0000 UTC
+	//             Not After : 2020-01-01 00:00:00 +0000 UTC
+	//         Subject Public Key Info:
+	//             Public Key Algorithm: RSA
+	//                 RSA Public-Key: (2048 bit)
+	//                 Modulus:
+	//                     00:fe:6b:e6:fc:5a:21:e3:34:74:24:cc:73:fb:d4:
+	//                     ...(omitted)
+	//                 Exponent: 65537 (0x10001)
+	responderCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/ca-intermediate-a-rsa-ocsp-responder.crt")
+	template = ocsp.Response{
+		SerialNumber: targetCert.SerialNumber,
+		Certificate:  responderCert,
+		Status:       ocsp.Good,
+		ThisUpdate:   time.Now().AddDate(0, 0, -2),
+		NextUpdate:   time.Now().AddDate(0, 0, 2),
+	}
+	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
+	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCerts, true)
+	assert.Equal(checker.CRITICAL, state.Status)
+	assert.Contains(state.Message, "ocsp: OCSP response signer's certificate error: x509: certificate has expired or is not yet valid:")
+
+	w.Reset()
+	state.Print()
+	assert.Contains(w.String(), "CRITICAL: ocsp: OCSP response signer's certificate error: x509: certificate has expired or is not yet valid:")
+
+	w.Reset()
+	state.PrintDetails(2, x509util.StrictDN)
+	assert.Contains(w.String(), `    OCSP Response Data:
+        OCSP Response Status: successful (0x0)
+        Cert Status: good
+`)
+	assert.Contains(w.String(), `    Certificate:
+        Issuer : CN=Intermediate CA A RSA
+        Subject: CN=Intermediate CA A RSA OCSP Responder
+        Validity:
+`)
 }
