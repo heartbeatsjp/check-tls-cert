@@ -35,7 +35,7 @@ var (
 			rootFile, _ = homedir.Expand(rootFile)
 			passwordFile, _ = homedir.Expand(passwordFile)
 
-			code, err := file.Run(hostname, keyFile, certFile, chainFile, rootFile, caFile, passwordFile, warning, critical, dntype, verbose)
+			code, err := file.Run(hostname, keyFile, certFile, chainFile, rootFile, caFile, passwordFile, warning, critical, enableSSLCertDir, dntype, verbose)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err.Error())
 			}

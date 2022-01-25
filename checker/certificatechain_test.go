@@ -16,15 +16,19 @@ import (
 
 func TestCheckCertificateChain(t *testing.T) {
 	var (
-		state             checker.State
-		serverCert        *x509.Certificate
-		intermediateCerts []*x509.Certificate
-		rootCerts         []*x509.Certificate
+		state        checker.State
+		certs        []*x509.Certificate
+		rootCerts    []*x509.Certificate
+		rootCertPool *x509.CertPool
 	)
 	assert := assert.New(t)
 	w := strings.Builder{}
 	checker.SetOutput(&w)
 
+	// CN=server-a.test (RSA)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -39,13 +43,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 17:09:50 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	// CN=server-a.test (RSA)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -82,6 +83,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA A RSA
             Expiration: `)
 
+	// CN=server-a.test (ECDSA)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -96,13 +101,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 18:34:38 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	// CN=server-a.test (ECDSA)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ecdsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -138,6 +140,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA A RSA
             Expiration: `)
 
+	// CN=server-a.test (Ed25519)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -152,13 +158,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 17:09:50 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	// CN=server-a.test (Ed25519)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ed25519.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -194,27 +197,28 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA A RSA
             Expiration: `)
 
-	// OK: the certificate chain is valid
-	//     - OK: ROOT CA G2 RSA
-	//         Subject   : CN=ROOT CA G2 RSA
-	//         Issuer    : CN=ROOT CA G2 RSA
-	//         Expiration: 2035-01-01 09:00:00 +0900
-	//       - OK: Intermediate CA B RSA
-	//           Subject   : CN=Intermediate CA B RSA
-	//           Issuer    : CN=ROOT CA G2 RSA
-	//           Expiration: 2031-02-22 18:50:48 +0900
-	//         - OK: server-b.test
-	//             Subject   : CN=server-b.test
-	//             Issuer    : CN=Intermediate CA B RSA
-	//             Expiration: 2022-02-21 18:50:48 +0900
-	//
-	// CN=ROOT CA G2 RSA
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA B RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
 	// CN=server-b.test (RSA)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	// CN=Intermediate CA B RSA
+	// CN=ROOT CA G2 RSA
+	//
+	// OK: the certificate chain is valid
+	//     - OK: ROOT CA G2 RSA
+	//         Subject   : CN=ROOT CA G2 RSA
+	//         Issuer    : CN=ROOT CA G2 RSA
+	//         Expiration: 2035-01-01 09:00:00 +0900
+	//       - OK: Intermediate CA B RSA
+	//           Subject   : CN=Intermediate CA B RSA
+	//           Issuer    : CN=ROOT CA G2 RSA
+	//           Expiration: 2031-02-22 18:50:48 +0900
+	//         - OK: server-b.test
+	//             Subject   : CN=server-b.test
+	//             Issuer    : CN=Intermediate CA B RSA
+	//             Expiration: 2022-02-21 18:50:48 +0900
+	//
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -251,63 +255,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA B RSA
             Expiration: `)
 
-	// OK: the certificate chain is valid
-	//     - OK: ROOT CA G2 RSA
-	//         Subject   : CN=ROOT CA G2 RSA
-	//         Issuer    : CN=ROOT CA G2 RSA
-	//         Expiration: 2035-01-01 09:00:00 +0900
-	//       - OK: Intermediate CA B RSA
-	//           Subject   : CN=Intermediate CA B RSA
-	//           Issuer    : CN=ROOT CA G2 RSA
-	//           Expiration: 2031-02-22 18:50:48 +0900
-	//         - OK: server-b.test
-	//             Subject   : CN=server-b.test
-	//             Issuer    : CN=Intermediate CA B RSA
-	//             Expiration: 2022-02-21 18:50:48 +0900
-	//
-	// CN=ROOT CA G2 RSA
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA B RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
 	// CN=server-b.test (ECDSA)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-ecdsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
-
-	w.Reset()
-	state.Print()
-	assert.Equal(checker.OK, state.Status)
-	assert.Contains(w.String(), "OK: the certificate chain is valid")
-
-	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
-
-	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][0].Status)
-	assert.Equal("ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][0].CommonName)
-	assert.Equal("CN=ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Subject.String())
-	assert.Equal("CN=ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Issuer.String())
-	assert.Contains(w.String(), `    - OK: ROOT CA G2 RSA
-        Subject   : CN=ROOT CA G2 RSA
-        Issuer    : CN=ROOT CA G2 RSA
-        Expiration: `)
-
-	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][1].Status)
-	assert.Equal("Intermediate CA B RSA", state.Data.([][]checker.CertificateInfo)[0][1].CommonName)
-	assert.Equal("CN=Intermediate CA B RSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Subject.String())
-	assert.Equal("CN=ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Issuer.String())
-	assert.Contains(w.String(), `      - OK: Intermediate CA B RSA
-          Subject   : CN=Intermediate CA B RSA
-          Issuer    : CN=ROOT CA G2 RSA
-          Expiration: `)
-
-	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][2].Status)
-	assert.Equal("server-b.test", state.Data.([][]checker.CertificateInfo)[0][2].CommonName)
-	assert.Equal("CN=server-b.test", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Subject.String())
-	assert.Equal("CN=Intermediate CA B RSA", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Issuer.String())
-	assert.Contains(w.String(), `        - OK: server-b.test
-            Subject   : CN=server-b.test
-            Issuer    : CN=Intermediate CA B RSA
-            Expiration: `)
-
+	// CN=Intermediate CA B RSA
+	// CN=ROOT CA G2 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -322,13 +273,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA B RSA
 	//             Expiration: 2022-02-21 18:50:48 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA B RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
-	// CN=server-b.test (Ed25519)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-ed25519.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -365,27 +313,86 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA B RSA
             Expiration: `)
 
-	// OK: the certificate chain is valid
-	//     - OK: ROOT CA G2 ECDSA
-	//         Subject   : CN=ROOT CA G2 ECDSA
-	//         Issuer    : CN=ROOT CA G2 ECDSA
-	//         Expiration: 2035-01-01 09:00:00 +0900
-	//       - OK: Intermediate CA ECDSA
-	//           Subject   : CN=Intermediate CA ECDSA
-	//           Issuer    : CN=ROOT CA G2 ECDSA
-	//           Expiration: 2031-02-22 18:40:06 +0900
-	//         - OK: server-c.test
-	//             Subject   : CN=server-c.test
-	//             Issuer    : CN=Intermediate CA ECDSA
-	//             Expiration: 2022-02-21 18:40:06 +0900
+	// CN=server-b.test (Ed25519)
+	// CN=Intermediate CA B RSA
+	// CN=ROOT CA G2 RSA
 	//
-	// CN=ROOT CA G2 ECDSA
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
-	// CN=Intermediate CA ECDSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
+	// OK: the certificate chain is valid
+	//     - OK: ROOT CA G2 RSA
+	//         Subject   : CN=ROOT CA G2 RSA
+	//         Issuer    : CN=ROOT CA G2 RSA
+	//         Expiration: 2035-01-01 09:00:00 +0900
+	//       - OK: Intermediate CA B RSA
+	//           Subject   : CN=Intermediate CA B RSA
+	//           Issuer    : CN=ROOT CA G2 RSA
+	//           Expiration: 2031-02-22 18:50:48 +0900
+	//         - OK: server-b.test
+	//             Subject   : CN=server-b.test
+	//             Issuer    : CN=Intermediate CA B RSA
+	//             Expiration: 2022-02-21 18:50:48 +0900
+	//
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
+
+	w.Reset()
+	state.Print()
+	assert.Equal(checker.OK, state.Status)
+	assert.Contains(w.String(), "OK: the certificate chain is valid")
+
+	w.Reset()
+	state.PrintDetails(2, x509util.StrictDN)
+
+	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][0].Status)
+	assert.Equal("ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][0].CommonName)
+	assert.Equal("CN=ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Issuer.String())
+	assert.Contains(w.String(), `    - OK: ROOT CA G2 RSA
+        Subject   : CN=ROOT CA G2 RSA
+        Issuer    : CN=ROOT CA G2 RSA
+        Expiration: `)
+
+	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][1].Status)
+	assert.Equal("Intermediate CA B RSA", state.Data.([][]checker.CertificateInfo)[0][1].CommonName)
+	assert.Equal("CN=Intermediate CA B RSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Issuer.String())
+	assert.Contains(w.String(), `      - OK: Intermediate CA B RSA
+          Subject   : CN=Intermediate CA B RSA
+          Issuer    : CN=ROOT CA G2 RSA
+          Expiration: `)
+
+	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][2].Status)
+	assert.Equal("server-b.test", state.Data.([][]checker.CertificateInfo)[0][2].CommonName)
+	assert.Equal("CN=server-b.test", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Subject.String())
+	assert.Equal("CN=Intermediate CA B RSA", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Issuer.String())
+	assert.Contains(w.String(), `        - OK: server-b.test
+            Subject   : CN=server-b.test
+            Issuer    : CN=Intermediate CA B RSA
+            Expiration: `)
+
 	// CN=server-c.test (RSA)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-c-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	// CN=Intermediate CA ECDSA
+	// CN=ROOT CA G2 ECDSA
+	//
+	// OK: the certificate chain is valid
+	//     - OK: ROOT CA G2 ECDSA
+	//         Subject   : CN=ROOT CA G2 ECDSA
+	//         Issuer    : CN=ROOT CA G2 ECDSA
+	//         Expiration: 2035-01-01 09:00:00 +0900
+	//       - OK: Intermediate CA ECDSA
+	//           Subject   : CN=Intermediate CA ECDSA
+	//           Issuer    : CN=ROOT CA G2 ECDSA
+	//           Expiration: 2031-02-22 18:40:06 +0900
+	//         - OK: server-c.test
+	//             Subject   : CN=server-c.test
+	//             Issuer    : CN=Intermediate CA ECDSA
+	//             Expiration: 2022-02-21 18:40:06 +0900
+	//
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -422,63 +429,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA ECDSA
             Expiration: `)
 
-	// OK: the certificate chain is valid
-	//     - OK: ROOT CA G2 ECDSA
-	//         Subject   : CN=ROOT CA G2 ECDSA
-	//         Issuer    : CN=ROOT CA G2 ECDSA
-	//         Expiration: 2035-01-01 09:00:00 +0900
-	//       - OK: Intermediate CA ECDSA
-	//           Subject   : CN=Intermediate CA ECDSA
-	//           Issuer    : CN=ROOT CA G2 ECDSA
-	//           Expiration: 2031-02-22 18:40:06 +0900
-	//         - OK: server-c.test
-	//             Subject   : CN=server-c.test
-	//             Issuer    : CN=Intermediate CA ECDSA
-	//             Expiration: 2022-02-21 18:40:06 +0900
-	//
-	// CN=ROOT CA G2 ECDSA
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
-	// CN=Intermediate CA ECDSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
 	// CN=server-c.test (ECDSA)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-c-ecdsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
-
-	w.Reset()
-	state.Print()
-	assert.Equal(checker.OK, state.Status)
-	assert.Contains(w.String(), "OK: the certificate chain is valid")
-
-	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
-
-	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][0].Status)
-	assert.Equal("ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][0].CommonName)
-	assert.Equal("CN=ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Subject.String())
-	assert.Equal("CN=ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Issuer.String())
-	assert.Contains(w.String(), `    - OK: ROOT CA G2 ECDSA
-        Subject   : CN=ROOT CA G2 ECDSA
-        Issuer    : CN=ROOT CA G2 ECDSA
-        Expiration: `)
-
-	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][1].Status)
-	assert.Equal("Intermediate CA ECDSA", state.Data.([][]checker.CertificateInfo)[0][1].CommonName)
-	assert.Equal("CN=Intermediate CA ECDSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Subject.String())
-	assert.Equal("CN=ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Issuer.String())
-	assert.Contains(w.String(), `      - OK: Intermediate CA ECDSA
-          Subject   : CN=Intermediate CA ECDSA
-          Issuer    : CN=ROOT CA G2 ECDSA
-          Expiration: `)
-
-	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][2].Status)
-	assert.Equal("server-c.test", state.Data.([][]checker.CertificateInfo)[0][2].CommonName)
-	assert.Equal("CN=server-c.test", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Subject.String())
-	assert.Equal("CN=Intermediate CA ECDSA", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Issuer.String())
-	assert.Contains(w.String(), `        - OK: server-c.test
-            Subject   : CN=server-c.test
-            Issuer    : CN=Intermediate CA ECDSA
-            Expiration: `)
-
+	// CN=Intermediate CA ECDSA
+	// CN=ROOT CA G2 ECDSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 ECDSA
 	//         Subject   : CN=ROOT CA G2 ECDSA
@@ -493,13 +447,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA ECDSA
 	//             Expiration: 2022-02-21 18:40:06 +0900
 	//
-	// CN=ROOT CA G2 ECDSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
-	// CN=Intermediate CA ECDSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
-	// CN=server-c.test (Ed25519)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-c-ed25519.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -536,6 +487,67 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA ECDSA
             Expiration: `)
 
+	// CN=server-c.test (Ed25519)
+	// CN=Intermediate CA ECDSA
+	// CN=ROOT CA G2 ECDSA
+	//
+	// OK: the certificate chain is valid
+	//     - OK: ROOT CA G2 ECDSA
+	//         Subject   : CN=ROOT CA G2 ECDSA
+	//         Issuer    : CN=ROOT CA G2 ECDSA
+	//         Expiration: 2035-01-01 09:00:00 +0900
+	//       - OK: Intermediate CA ECDSA
+	//           Subject   : CN=Intermediate CA ECDSA
+	//           Issuer    : CN=ROOT CA G2 ECDSA
+	//           Expiration: 2031-02-22 18:40:06 +0900
+	//         - OK: server-c.test
+	//             Subject   : CN=server-c.test
+	//             Issuer    : CN=Intermediate CA ECDSA
+	//             Expiration: 2022-02-21 18:40:06 +0900
+	//
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
+
+	w.Reset()
+	state.Print()
+	assert.Equal(checker.OK, state.Status)
+	assert.Contains(w.String(), "OK: the certificate chain is valid")
+
+	w.Reset()
+	state.PrintDetails(2, x509util.StrictDN)
+
+	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][0].Status)
+	assert.Equal("ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][0].CommonName)
+	assert.Equal("CN=ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Subject.String())
+	assert.Equal("CN=ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][0].Certificate.Issuer.String())
+	assert.Contains(w.String(), `    - OK: ROOT CA G2 ECDSA
+        Subject   : CN=ROOT CA G2 ECDSA
+        Issuer    : CN=ROOT CA G2 ECDSA
+        Expiration: `)
+
+	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][1].Status)
+	assert.Equal("Intermediate CA ECDSA", state.Data.([][]checker.CertificateInfo)[0][1].CommonName)
+	assert.Equal("CN=Intermediate CA ECDSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Subject.String())
+	assert.Equal("CN=ROOT CA G2 ECDSA", state.Data.([][]checker.CertificateInfo)[0][1].Certificate.Issuer.String())
+	assert.Contains(w.String(), `      - OK: Intermediate CA ECDSA
+          Subject   : CN=Intermediate CA ECDSA
+          Issuer    : CN=ROOT CA G2 ECDSA
+          Expiration: `)
+
+	assert.Equal(checker.OK, state.Data.([][]checker.CertificateInfo)[0][2].Status)
+	assert.Equal("server-c.test", state.Data.([][]checker.CertificateInfo)[0][2].CommonName)
+	assert.Equal("CN=server-c.test", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Subject.String())
+	assert.Equal("CN=Intermediate CA ECDSA", state.Data.([][]checker.CertificateInfo)[0][2].Certificate.Issuer.String())
+	assert.Contains(w.String(), `        - OK: server-c.test
+            Subject   : CN=server-c.test
+            Issuer    : CN=Intermediate CA ECDSA
+            Expiration: `)
+
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA (root CA certificate not found)
+	//
 	// CRITICAL: the certificate chain is invalid / x509: certificate signed by unknown authority
 	//     - INFO: ROOT CA G2 RSA
 	//         Message   : a valid root CA certificate cannot be found, or the certificate chain is broken
@@ -549,11 +561,8 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 18:04:30 +0900
 	//
-	// CN=Intermediate CA A RSA (root CA certificate not found)
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	// CN=server-a.test
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, []*x509.Certificate{})
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	state = checker.CheckCertificateChain(certs, nil)
 
 	w.Reset()
 	state.Print()
@@ -586,6 +595,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA A RSA
             Expiration: `)
 
+	// CN=server-a.test (expired)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	//
 	// CRITICAL: the certificate chain is invalid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -601,13 +614,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Expiration: 2020-01-01 09:00:00 +0900
 	//             Error     : the certificate has expired on 2020-01-01 09:00:00 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	// CN=server-a.test (expired)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/server-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -644,6 +654,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA A RSA
             Expiration: `)
 
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA (expired)
+	// CN=ROOT CA G2 RSA
+	//
 	// CRITICAL: the certificate chain is invalid / x509: certificate has expired or is not yet valid: current time 2021-06-22T10:15:58+09:00 is after 2020-01-01T00:00:00Z
 	//     - INFO: ROOT CA G2 RSA
 	//         Message   : a valid root certificate cannot be found, or the certificate chain is broken
@@ -657,13 +671,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 18:09:37 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA (expired)
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
-	// CN=server-a.test
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -696,6 +707,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA A RSA
             Expiration: `)
 
+	// CN=server-b.test
+	// CN=Intermediate CA A RSA (not an issuer of CN=server-b.test)
+	// CN=ROOT CA G2 RSA
+	//
 	// CRITICAL: the certificate chain is invalid / x509: certificate signed by unknown authority
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -711,13 +726,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//             Expiration: 2022-02-21 18:11:42 +0900
 	//             Error     : crypto/rsa: verification error / parent certificate may not be correct issuer
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA (not an issuer of CN=server-b.test)
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	// CN=server-b.test
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -754,6 +766,10 @@ func TestCheckCertificateChain(t *testing.T) {
             Issuer    : CN=Intermediate CA B RSA
             Expiration: `)
 
+	// CN=Intermediate CA A RSA (specified file not correct)
+	// CN=server-a.test (RSA) (specified file not correct)
+	// CN=ROOT CA G2 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -764,13 +780,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//           Issuer    : CN=ROOT CA G2 RSA
 	//           Expiration: 2031-02-23 09:01:04 +0900
 	//
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/cert/valid/server-a-rsa.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=server-a.test (RSA) (specified file not correct)
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	// CN=Intermediate CA A RSA (specified file not correct)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -800,6 +813,11 @@ func TestCheckCertificateChain(t *testing.T) {
 
 	// An old-generation root CA Certificate and a cross-signing root CA Certificate
 	//
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA (cross-signing)
+	// CN=ROOT CA G1 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G1 RSA
 	//         Subject   : CN=ROOT CA G1 RSA
@@ -818,14 +836,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//               Issuer    : CN=Intermediate CA A RSA
 	//               Expiration: 2022-02-21 17:52:57 +0900
 	//
-	// CN=ROOT CA G1 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt")
-	// CN=Intermediate CA A RSA
-	// CN=ROOT CA G2 RSA (cross-signing)
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
-	// CN=server-a.test
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()
@@ -873,6 +887,11 @@ func TestCheckCertificateChain(t *testing.T) {
 
 	// An old-generation root CA Certificate and a cross-signing root CA Certificate
 	//
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA (cross-signing)
+	// CN=ROOT CA G1 RSA, CN=ROOT CA G2 RSA
+	//
 	// OK: the certificate chain is valid
 	//     - OK: ROOT CA G2 RSA
 	//         Subject   : CN=ROOT CA G2 RSA
@@ -903,15 +922,10 @@ func TestCheckCertificateChain(t *testing.T) {
 	//               Issuer    : CN=Intermediate CA A RSA
 	//               Expiration: 2022-02-21 17:52:57 +0900
 	//
-	// CN=ROOT CA G1 RSA
-	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
 	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
-	// CN=Intermediate CA A RSA
-	// CN=ROOT CA G2 RSA (cross-signing)
-	intermediateCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
-	// CN=server-a.test
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state = checker.CheckCertificateChain(serverCert, intermediateCerts, rootCerts)
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	state = checker.CheckCertificateChain(certs, rootCertPool)
 
 	w.Reset()
 	state.Print()

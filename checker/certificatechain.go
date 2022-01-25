@@ -11,7 +11,7 @@ import (
 )
 
 // CheckCertificateChain checks wheather the certificate chain is valid.
-func CheckCertificateChain(serverCert *x509.Certificate, intermediateCerts []*x509.Certificate, rootCerts []*x509.Certificate) State {
+func CheckCertificateChain(certs []*x509.Certificate, rootCertPool *x509.CertPool) State {
 	const name = "Certificate Chains"
 
 	var certInfoInChains [][]CertificateInfo
@@ -42,7 +42,7 @@ func CheckCertificateChain(serverCert *x509.Certificate, intermediateCerts []*x5
 
 	status := OK
 	message := "the certificate chain is valid"
-	chains, err := getCertificateChains(serverCert, intermediateCerts, rootCerts)
+	chains, err := getCertificateChains(certs, rootCertPool)
 	if err != nil {
 		status = CRITICAL
 	}
@@ -100,58 +100,23 @@ func CheckCertificateChain(serverCert *x509.Certificate, intermediateCerts []*x5
 	return state
 }
 
-func getCertificateChains(serverCert *x509.Certificate, intermediateCerts []*x509.Certificate, rootCerts []*x509.Certificate) (chains [][]*x509.Certificate, err error) {
-	roots, err := x509util.GetRootCertPool(rootCerts)
-	if err != nil {
-		return nil, err
+func getCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPool) (chains [][]*x509.Certificate, err error) {
+	serverCert := certs[0]
+	var intermediateCerts []*x509.Certificate
+	if len(certs) > 1 {
+		intermediateCerts = certs[1:]
 	}
 
-	intermediates := x509util.GetIntermediateCertPool(intermediateCerts)
-
 	opts := x509.VerifyOptions{
-		Intermediates: intermediates,
-		Roots:         roots,
+		Intermediates: x509util.GetIntermediateCertPool(intermediateCerts),
+		Roots:         rootCertPool,
 	}
 
 	chains, err = serverCert.Verify(opts)
 	if err != nil {
 		// When Verify() fails, the status of each certificate is unknown.
 		// So, it builds a certificate chain.
-		var chain []*x509.Certificate
-		chain = append(chain, serverCert)
-		chain = append(chain, intermediateCerts...)
-		rootCert, err := getRootCertificate(intermediateCerts, rootCerts)
-		if err != nil {
-			return nil, err
-		}
-		if rootCert != nil {
-			chain = append(chain, rootCert)
-		}
-		chains = append(chains, chain)
+		chains = x509util.BuildCertificateChains(certs, rootCertPool)
 	}
 	return chains, err
-}
-
-func getRootCertificate(intermediateCerts []*x509.Certificate, rootCerts []*x509.Certificate) (rootCert *x509.Certificate, err error) {
-	roots, err := x509util.GetRootCertPool(rootCerts)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := x509.VerifyOptions{
-		Roots: roots,
-	}
-
-	for _, intermediateCert := range intermediateCerts {
-		chains, _ := intermediateCert.Verify(opts)
-		for _, chain := range chains {
-			for _, cert := range chain {
-				if err := intermediateCert.CheckSignatureFrom(cert); err == nil {
-					rootCert = cert
-					break
-				}
-			}
-		}
-	}
-	return rootCert, nil
 }

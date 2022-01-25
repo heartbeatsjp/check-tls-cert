@@ -89,6 +89,12 @@ It verifies the digital signature, Subject, Issuer, and expiration date of the c
 The certificate chain from the root certificate to the server certificate is checked. Therefore, if the root certificate is not installed on the system, an error will occur.
 By setting the option `--root-file`, you can specify a root certificate file to validate the certificate chain.
 
+By default, system certificate directories and the environmenrt variable SSL_CERT_DIR are disabled.
+This is a workaround for the following issue:
+  https://github.com/golang/go/issues/39540
+You can enable them by setting the option `--enable-ssl-cert-dir`.
+
+
 ### OCSP Stapling Checker
 
 It checks the OCSP response obtained by OCSP stapling.
@@ -163,11 +169,12 @@ Flags:
   -P, --password-file file   password file for the private key file if the private key file is encrypted. If it is not specified, you will be prompted to enter the password.
 
 Global Flags:
-  -c, --critical days    critical threshold in days before expiration date (default 14)
-      --dn-type string   Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
-      --root-file file   root certificate file (default system root certificate file)
-  -v, --verbose count    verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
-  -w, --warning days     warning threshold in days before expiration date (default 28)
+  -c, --critical days         critical threshold in days before expiration date (default 14)
+      --dn-type string        Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
+      --enable-ssl-cert-dir   enable system default certificate directories or environment variable SSL_CERT_DIR
+      --root-file file        root certificate file (default system root certificate file)
+  -v, --verbose count         verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
+  -w, --warning days          warning threshold in days before expiration date (default 28)
 ```
 
 ### net command
@@ -191,11 +198,12 @@ Flags:
   -6, --use-ipv6                  use IPv6
 
 Global Flags:
-  -c, --critical days    critical threshold in days before expiration date (default 14)
-      --dn-type string   Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
-      --root-file file   root certificate file (default system root certificate file)
-  -v, --verbose count    verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
-  -w, --warning days     warning threshold in days before expiration date (default 28)
+  -c, --critical days         critical threshold in days before expiration date (default 14)
+      --dn-type string        Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
+      --enable-ssl-cert-dir   enable system default certificate directories or environment variable SSL_CERT_DIR
+      --root-file file        root certificate file (default system root certificate file)
+  -v, --verbose count         verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
+  -w, --warning days          warning threshold in days before expiration date (default 28)
 ```
 
 ## EXAMPLE OF EXECUTION
@@ -390,12 +398,13 @@ To get more detailed information, use the '-vv' option.
 ```
 
 ### Shell completions
+
 `check-tls-cert completion` subcommand generates the autocompletion script for shells.
 
 See `check-tls-cert completion bash/zsh/fish --help` to load them.
 
 ## LICENSE
 
-Copyright 2021 HEARTBEATS Corporation. All rights reserved.
+Copyright 2021-2022 HEARTBEATS Corporation. All rights reserved.
 
 Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.

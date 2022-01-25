@@ -150,15 +150,16 @@ func TestVerifyAuthorizedResponder(t *testing.T) {
 	targetCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
 	intermediateCerts := []*x509.Certificate{issuerCert}
 	rootCerts, _ := x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root.pem")
+	rootCertPool, _ := x509util.GetRootCertPool(rootCerts, false)
 
 	priv := privateKeyInfo.Key.(*rsa.PrivateKey)
 
 	// no response, no issuer
-	err = ocsputil.VerifyAuthorizedResponder(nil, nil, intermediateCerts, rootCerts)
+	err = ocsputil.VerifyAuthorizedResponder(nil, nil, intermediateCerts, rootCertPool)
 	assert.Nil(err)
 
 	// no response
-	err = ocsputil.VerifyAuthorizedResponder(nil, issuerCert, intermediateCerts, rootCerts)
+	err = ocsputil.VerifyAuthorizedResponder(nil, issuerCert, intermediateCerts, rootCertPool)
 	assert.Nil(err)
 
 	// Response status: good
@@ -191,7 +192,7 @@ func TestVerifyAuthorizedResponder(t *testing.T) {
 	}
 	responseBytes, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
 	response, _ = ocsp.ParseResponse(responseBytes, issuerCert)
-	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCerts)
+	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCertPool)
 	assert.Nil(err)
 
 	// Response status: revoked
@@ -228,7 +229,7 @@ func TestVerifyAuthorizedResponder(t *testing.T) {
 	}
 	responseBytes, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
 	response, _ = ocsp.ParseResponse(responseBytes, issuerCert)
-	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCerts)
+	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCertPool)
 	assert.Nil(err)
 
 	// Response status: unknown
@@ -261,7 +262,7 @@ func TestVerifyAuthorizedResponder(t *testing.T) {
 	}
 	responseBytes, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
 	response, _ = ocsp.ParseResponse(responseBytes, issuerCert)
-	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCerts)
+	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCertPool)
 	assert.Nil(err)
 
 	// expired certificate
@@ -296,7 +297,7 @@ func TestVerifyAuthorizedResponder(t *testing.T) {
 	}
 	responseBytes, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
 	response, _ = ocsp.ParseResponse(responseBytes, issuerCert)
-	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCerts)
+	err = ocsputil.VerifyAuthorizedResponder(response.Certificate, issuerCert, intermediateCerts, rootCertPool)
 	assert.NotNil(err)
 	assert.Equal(x509.InvalidReason(1), err.(x509.CertificateInvalidError).Reason)
 	assert.Contains(err.(x509.CertificateInvalidError).Detail, "is after 2020-01-01T00:00:00Z")
