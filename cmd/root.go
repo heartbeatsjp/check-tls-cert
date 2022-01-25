@@ -16,12 +16,13 @@ import (
 )
 
 var (
-	hostname string
-	warning  int
-	critical int
-	rootFile string
-	dnType   string
-	verbose  int
+	hostname         string
+	warning          int
+	critical         int
+	rootFile         string
+	enableSSLCertDir bool
+	dnType           string
+	verbose          int
 
 	rootCmd = &cobra.Command{
 		Use:     "check-tls-cert",
@@ -46,6 +47,7 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&warning, "warning", "w", 28, "warning threshold in `days` before expiration date")
 	rootCmd.PersistentFlags().IntVarP(&critical, "critical", "c", 14, "critical threshold in `days` before expiration date")
 	rootCmd.PersistentFlags().StringVar(&rootFile, "root-file", "", "root certificate `file` (default system root certificate file)")
+	rootCmd.PersistentFlags().BoolVar(&enableSSLCertDir, "enable-ssl-cert-dir", false, "enable system default certificate directories or environment variable SSL_CERT_DIR")
 	rootCmd.PersistentFlags().StringVar(&dnType, "dn-type", "loose", "Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl'")
 	rootCmd.PersistentFlags().CountVarP(&verbose, "verbose", "v", "verbose mode. Multiple -v options increase the verbosity. The maximum is 3.")
 }

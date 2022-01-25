@@ -172,7 +172,11 @@ func TestGetRootCertPool(t *testing.T) {
 
 	certFile := "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
-	roots, err = x509util.GetRootCertPool(certs)
+	roots, err = x509util.GetRootCertPool(certs, false)
+	assert.Nil(err)
+	assert.Equal(certs[0].RawSubject, roots.Subjects()[0])
+
+	roots, err = x509util.GetRootCertPool(certs, true)
 	assert.Nil(err)
 	assert.Equal(certs[0].RawSubject, roots.Subjects()[0])
 }
@@ -189,4 +193,195 @@ func TestGetIntermediateCertPool(t *testing.T) {
 	intermediates = x509util.GetIntermediateCertPool(certs)
 	assert.Nil(err)
 	assert.Equal(certs[0].RawSubject, intermediates.Subjects()[0])
+}
+
+func TestBuildCertificateChains(t *testing.T) {
+	var (
+		certs        []*x509.Certificate
+		rootCerts    []*x509.Certificate
+		rootCertPool *x509.CertPool
+		chains       [][]*x509.Certificate
+	)
+	assert := assert.New(t)
+
+	// CN=server-a.test (RSA)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-a.test (ECDSA)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-a.test (Ed25519)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-b.test (RSA)
+	// CN=Intermediate CA B RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA B RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-b.test (ECDSA)
+	// CN=Intermediate CA B RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA B RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-b.test (Ed25519)
+	// CN=Intermediate CA B RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA B RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-c.test (RSA)
+	// CN=Intermediate CA ECDSA
+	// CN=ROOT CA G2 ECDSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-c.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA ECDSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 ECDSA", chains[0][2].Subject.String())
+
+	// CN=server-c.test (ECDSA)
+	// CN=Intermediate CA ECDSA
+	// CN=ROOT CA G2 ECDSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-c.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA ECDSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 ECDSA", chains[0][2].Subject.String())
+
+	// CN=server-c.test (Ed25519)
+	// CN=Intermediate CA ECDSA
+	// CN=ROOT CA G2 ECDSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-c.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA ECDSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 ECDSA", chains[0][2].Subject.String())
+
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA (root CA certificate not found)
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	chains = x509util.BuildCertificateChains(certs, nil)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+
+	// CN=server-a.test (expired)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA (expired)
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+
+	// CN=server-b.test
+	// CN=Intermediate CA A RSA (not an issuer of CN=server-b.test)
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+
+	// CN=Intermediate CA A RSA (specified file not correct)
+	// CN=server-a.test (RSA) (specified file not correct)
+	// CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][0].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][1].Subject.String())
+
+	// An old-generation root CA Certificate and a cross-signing root CA Certificate
+	//
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA (cross-signing)
+	// CN=ROOT CA G1 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+	assert.Equal("CN=ROOT CA G1 RSA", chains[0][3].Subject.String())
+
+	// An old-generation root CA Certificate and a cross-signing root CA Certificate
+	//
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA (cross-signing)
+	// CN=ROOT CA G1 RSA, CN=ROOT CA G2 RSA
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
+	chains = x509util.BuildCertificateChains(certs, rootCertPool)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
+	assert.Equal("CN=server-a.test", chains[1][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[1][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[1][2].Subject.String())
+	assert.Equal("CN=ROOT CA G1 RSA", chains[1][3].Subject.String())
 }

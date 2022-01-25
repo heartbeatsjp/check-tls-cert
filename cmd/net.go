@@ -55,7 +55,7 @@ var (
 				os.Exit(checker.UNKNOWN.Code())
 			}
 
-			code, err := net.Run(hostname, ipAddress, port, network, tlsMinVersion, startTLS, ocspoption, timeout, rootFile, warning, critical, dntype, verbose)
+			code, err := net.Run(hostname, ipAddress, port, network, tlsMinVersion, startTLS, ocspoption, timeout, rootFile, warning, critical, enableSSLCertDir, dntype, verbose)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err.Error())
 			}

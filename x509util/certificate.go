@@ -90,7 +90,7 @@ func VerifyValidity(cert *x509.Certificate, days int) (message string, err error
 // GetRootCertPool retrieves the root certificate pool.
 // If root certificates are provided, return a certificate pool for them.
 // If root certificates are not provided, return the system certificate pool.
-func GetRootCertPool(rootCerts []*x509.Certificate) (*x509.CertPool, error) {
+func GetRootCertPool(rootCerts []*x509.Certificate, enableSSLCertDir bool) (*x509.CertPool, error) {
 	var (
 		roots *x509.CertPool
 		err   error
@@ -102,6 +102,9 @@ func GetRootCertPool(rootCerts []*x509.Certificate) (*x509.CertPool, error) {
 			roots.AddCert(cert)
 		}
 	} else {
+		if !enableSSLCertDir {
+			os.Setenv("SSL_CERT_DIR", ":")
+		}
 		roots, err = x509.SystemCertPool()
 		if err != nil {
 			return nil, err
@@ -118,4 +121,43 @@ func GetIntermediateCertPool(intermediateCerts []*x509.Certificate) *x509.CertPo
 		intermediates.AddCert(cert)
 	}
 	return intermediates
+}
+
+// BuildCertificateChains builds certificate chains.
+func BuildCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPool) (chains [][]*x509.Certificate) {
+	opts := x509.VerifyOptions{
+		Roots: rootCertPool,
+	}
+
+	// If a valid root certificate is found, build a chain with it.
+	for i := 0; i < len(certs); i++ {
+		candidateChains, err := certs[i].Verify(opts)
+		if err != nil {
+			continue
+		}
+
+		for _, candidateChain := range candidateChains {
+			if len(candidateChain) != 2 {
+				continue
+			}
+
+			candidateRootCert := candidateChain[1]
+
+			if !bytes.Equal(candidateRootCert.RawIssuer, candidateRootCert.RawSubject) {
+				continue
+			}
+
+			var chain []*x509.Certificate
+			chain = append(chain, certs[:i+1]...)
+			chain = append(chain, candidateRootCert)
+			chains = append(chains, chain)
+		}
+	}
+
+	// If no valid root certificate is found, a chain without any root certificate is returned.
+	if len(chains) == 0 {
+		chains = append(chains, certs)
+	}
+
+	return chains
 }

@@ -234,7 +234,7 @@ func GetOCSPResponse(cert *x509.Certificate, issuer *x509.Certificate) (string, 
 }
 
 // VerifyAuthorizedResponder verifies the certificate of the authorized responder.
-func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermediateCerts, rootCerts []*x509.Certificate) error {
+func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermediateCerts []*x509.Certificate, rootCertPool *x509.CertPool) error {
 	if responderCert == nil {
 		return nil
 	}
@@ -259,17 +259,11 @@ func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermed
 		return errors.New("invalid certificate")
 	}
 
-	roots, err := x509util.GetRootCertPool(rootCerts)
-	if err != nil {
-		return err
-	}
-	intermediates := x509util.GetIntermediateCertPool(intermediateCerts)
-
 	opts := x509.VerifyOptions{
-		Intermediates: intermediates,
-		Roots:         roots,
+		Intermediates: x509util.GetIntermediateCertPool(intermediateCerts),
+		Roots:         rootCertPool,
 		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 	}
-	_, err = responderCert.Verify(opts)
+	_, err := responderCert.Verify(opts)
 	return err
 }

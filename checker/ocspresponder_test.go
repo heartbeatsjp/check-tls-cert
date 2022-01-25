@@ -6,7 +6,6 @@ package checker_test
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"net"
 	"strings"
 	"testing"
@@ -62,7 +61,7 @@ func TestCheckOCSPResponder(t *testing.T) {
 	//                     00:fe:6b:e6:fc:5a:21:e3:34:74:24:cc:73:fb:d4:
 	//                     ...(omitted)
 	//                 Exponent: 65537 (0x10001)
-	state = checker.CheckOCSPResponder(targetCert, issuer, intermediateCerts, []*x509.Certificate{})
+	state = checker.CheckOCSPResponder(targetCert, issuer, intermediateCerts, nil)
 	assert.Equal(checker.OK, state.Status)
 	assert.Equal("certificate is valid", state.Message)
 
