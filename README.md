@@ -91,7 +91,9 @@ By setting the option `--root-file`, you can specify a root certificate file to 
 
 By default, system certificate directories and the environmenrt variable SSL_CERT_DIR are disabled.
 This is a workaround for the following issue:
-  https://github.com/golang/go/issues/39540
+
+- https://github.com/golang/go/issues/39540  
+
 You can enable them by setting the option `--enable-ssl-cert-dir`.
 
 

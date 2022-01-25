@@ -5,6 +5,7 @@
 package ocsputil
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/x509"
 	"encoding/base64"
@@ -242,7 +243,7 @@ func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermed
 	// See RFC 6969 4.2.2.2. Authorized Responders
 	if responderCert.Equal(issuer) {
 		// valid
-	} else if issuer.Subject.String() == responderCert.Issuer.String() {
+	} else if bytes.Equal(responderCert.RawIssuer, issuer.RawSubject) {
 		incompatibleKeyUsage := true
 		for _, usage := range responderCert.ExtKeyUsage {
 			if usage == x509.ExtKeyUsageOCSPSigning {
