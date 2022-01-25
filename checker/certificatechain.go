@@ -5,6 +5,7 @@
 package checker
 
 import (
+	"bytes"
 	"crypto/x509"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
@@ -55,7 +56,7 @@ func CheckCertificateChain(certs []*x509.Certificate, rootCertPool *x509.CertPoo
 		}
 		parent := chain[n-1]
 
-		if parent.Subject.String() != parent.Issuer.String() {
+		if !bytes.Equal(parent.RawIssuer, parent.RawSubject) {
 			// If the first certificate is not the root CA, add the information of the root CA.
 			certInfo := CertificateInfo{
 				CommonName: parent.Issuer.CommonName,

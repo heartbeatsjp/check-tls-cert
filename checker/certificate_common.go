@@ -5,6 +5,7 @@
 package checker
 
 import (
+	"bytes"
 	"crypto/x509"
 	"strings"
 
@@ -24,7 +25,7 @@ func getCertificateInfo(cert *x509.Certificate, parent *x509.Certificate, forceP
 	var messages []string
 
 	if parent == nil {
-		if cert.Issuer.String() == cert.Subject.String() {
+		if bytes.Equal(cert.RawIssuer, cert.RawSubject) {
 			// Since the certificate is a self-signed root certificate, the signature check should not fail.
 			if err := cert.CheckSignatureFrom(cert); err != nil {
 				status = ERROR
