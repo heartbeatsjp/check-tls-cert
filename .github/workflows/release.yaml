@@ -2,7 +2,7 @@ name: Releases
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v*"
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -58,7 +58,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [darwin_amd64, darwin_arm64, linux_amd64, linux_arm64]
+        os:
+          [darwin_amd64, darwin_arm64, linux_amd64, linux_arm64, windows_amd64]
         include:
           - os: darwin_amd64
             goos: darwin
@@ -72,6 +73,9 @@ jobs:
           - os: linux_arm64
             goos: linux
             arch: arm64
+          - os: windows_amd64
+            goos: windows
+            arch: amd64
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -91,7 +95,8 @@ jobs:
       - name: Build
         run: |
           go get -t -v ./...
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert .
+          [[ ${{ matrix.goos }} != "windows" ]] && GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert .
+          [[ ${{ matrix.goos }} == "windows" ]] && GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert.exe .
 
       - name: Version
         id: version
@@ -101,7 +106,8 @@ jobs:
         run: |
           cd dist
           mv check-tls-cert check-tls-cert-${VERSION}
-          zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert check-tls-cert-${VERSION}/README.md
+          [[ ${{ matrix.goos }} != "windows" ]] && zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert check-tls-cert-${VERSION}/README.md
+          [[ ${{ matrix.goos }} == "windows" ]] && zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert.exe check-tls-cert-${VERSION}/README.md
           tar -cJf ../check-tls-cert.tar.xz check-tls-cert-${VERSION}
         env:
           VERSION: ${{ steps.version.outputs.version }}

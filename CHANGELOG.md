@@ -1,5 +1,23 @@
 # ChangeLog
 
+## 0.8.0 (2022-04-08)
+
+### Feature
+
+- Support go 1.18 [#32]
+- Support Windows [#32]
+- Added `no` as a value for an option --ocsp [#32]
+
+## 0.7.0 (2022-01-25)
+
+### Feature
+
+- Add an option --enable-ssl-cert-dir [#30]
+
+### Fixed
+
+- Fix a bug that caused the certificate chain verification to fail if server certificates or intermediate certificates are placed in the system's certificate directory. [#30]
+
 ## 0.6.0 (2021-10-18)
 
 ### Feature
