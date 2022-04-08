@@ -95,8 +95,8 @@ jobs:
       - name: Build
         run: |
           go get -t -v ./...
-          [[ ${{ matrix.goos }} != "windows" ]] && GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert .
-          [[ ${{ matrix.goos }} == "windows" ]] && GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert.exe .
+          if [[ ${{ matrix.goos }} != "windows" ]]; then GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert .; fi
+          if [[ ${{ matrix.goos }} == "windows" ]]; then GOOS=${{ matrix.goos }} GOARCH=${{ matrix.arch }} go build -v -o dist/check-tls-cert/check-tls-cert.exe .; fi
 
       - name: Version
         id: version
@@ -106,8 +106,8 @@ jobs:
         run: |
           cd dist
           mv check-tls-cert check-tls-cert-${VERSION}
-          [[ ${{ matrix.goos }} != "windows" ]] && zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert check-tls-cert-${VERSION}/README.md
-          [[ ${{ matrix.goos }} == "windows" ]] && zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert.exe check-tls-cert-${VERSION}/README.md
+          if [[ ${{ matrix.goos }} != "windows" ]]; then zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert check-tls-cert-${VERSION}/README.md; fi
+          if [[ ${{ matrix.goos }} == "windows" ]]; then zip ../check-tls-cert.zip check-tls-cert-${VERSION}/check-tls-cert.exe check-tls-cert-${VERSION}/README.md; fi
           tar -cJf ../check-tls-cert.tar.xz check-tls-cert-${VERSION}
         env:
           VERSION: ${{ steps.version.outputs.version }}
