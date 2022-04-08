@@ -101,7 +101,9 @@ You can enable them by setting the option `--enable-ssl-cert-dir`.
 
 It checks the OCSP response obtained by OCSP stapling.
 
-You can set one of the options `--ocsp as-is`, `--ocsp stapling`, or `--ocsp fallback` to run this checker.
+You can set one of the options `--ocsp no`, `--ocsp as-is`, `--ocsp stapling`, or `--ocsp fallback` to run this checker.
+
+With the option `--ocsp no`, it disables OCSP stapling checker. You should use it when `insecure algorithm SHA1-RSA` error on `OCSP Stapling` occurs. 
 
 With the option `--ocsp as-is` (by default), if there is no OCSP response, the status will be "INFO".
 
@@ -125,11 +127,6 @@ If the response error is others, the status will be "UNKNOWN".
 
 ## LIMITATIONS
 
-### OS
-
-Only UNIX-like operating systems such as Linux and macOS are supported.
-Windows is not supported, because the system root certificate pool is not available on Windows in Golang 1.17.
-
 ### Encoding format for certificates and private keys
 
 Only PEM format is supported.
@@ -149,6 +146,29 @@ Only the following algorithms are supported:
 Only the uncompressed form of ECDSA is supported.
 
 These are due to limitations of Golang.
+
+### SHA-1 certificates
+
+Certificates that use SHA1WithRSA and ECDSAWithSHA1 signatures are not supported.
+
+This is due to limitations of Go 1.18. See also:
+
+- https://tip.golang.org/doc/go1.18#sha1
+
+
+## KNOWN ISSUES
+
+### Verification of certificates that do not have SCT fail
+
+On macOS, verification of certificates that do not have SCT fail.
+
+This is due to Apple's Certificate Transparency policy.
+
+- https://support.apple.com/en-us/HT205280
+
+For reference, on Windows, macOS, and iOS, Go 1.18 uses the platform verifier APIs for certificate verifications.
+
+- https://tip.golang.org/doc/go1.18#minor_library_changes
 
 
 ## USAGE
@@ -191,7 +211,7 @@ Flags:
   -h, --help                      help for net
   -H, --hostname hostname         hostname for verifying certificate
   -I, --ip-address address        IP address
-      --ocsp type                 OCSP checker type. 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
+      --ocsp type                 OCSP checker type. 'no', 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
   -p, --port number               port number (default 443)
       --starttls type             STARTTLS type. 'smtp', 'pop3, or 'imap'
   -t, --timeout seconds           connection timeout in seconds (default 10)

@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -266,5 +267,15 @@ func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermed
 		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 	}
 	_, err := responderCert.Verify(opts)
+
+	// Workaround for verification error on macOS and iOS.
+	// Because most of OCSP responder certificates does not have SCT, verifications using the platform APIs fail on macOS and iOS.
+	// See https://support.apple.com/en-us/HT205280
+	if err != nil && (runtime.GOOS == "darwin" || runtime.GOOS == "ios") {
+		if strings.Contains(err.Error(), "certificate is not standards compliant") {
+			err = x509util.VerifyCertificate(responderCert, intermediateCerts[0], false)
+		}
+	}
+
 	return err
 }

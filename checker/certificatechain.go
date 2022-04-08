@@ -54,19 +54,19 @@ func CheckCertificateChain(certs []*x509.Certificate, rootCertPool *x509.CertPoo
 		if n == 0 {
 			continue
 		}
-		parent := chain[n-1]
 
-		if !bytes.Equal(parent.RawIssuer, parent.RawSubject) {
-			// If the first certificate is not the root CA, add the information of the root CA.
+		root := chain[n-1]
+		if !bytes.Equal(root.RawIssuer, root.RawSubject) {
+			// If the first certificate is not a root CA, add the root CA information.
 			certInfo := CertificateInfo{
-				CommonName: parent.Issuer.CommonName,
+				CommonName: root.Issuer.CommonName,
 				Status:     INFO,
 				Message:    "a valid root certificate cannot be found, or the certificate chain is broken",
 			}
 			certInfoInChain = append(certInfoInChain, certInfo)
-			parent = nil
 		}
 
+		var parent *x509.Certificate
 		for i := 0; i < n; i++ {
 			cert := chain[n-i-1]
 			certInfo := getCertificateInfo(cert, parent, true)

@@ -5,7 +5,7 @@ all: build
 
 .PHONY: deps
 deps:
-	go get -v -d
+	go get -v
 
 .PHONY: build
 build: deps
@@ -18,6 +18,10 @@ install: deps
 .PHONY: build-linux
 build-linux:
 	GOOS=linux GOARCH=amd64 go build -o dist/linux_amd64/check-tls-cert check-tls-cert.go
+
+.PHONY: build-windows
+build-windows:
+	GOOS=windows GOARCH=amd64 go build -o dist/windows_amd64/check-tls-cert.exe check-tls-cert.go
 
 .PHONY: clean
 clean:

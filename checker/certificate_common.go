@@ -5,9 +5,7 @@
 package checker
 
 import (
-	"bytes"
 	"crypto/x509"
-	"strings"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
@@ -22,37 +20,12 @@ type CertificateInfo struct {
 
 func getCertificateInfo(cert *x509.Certificate, parent *x509.Certificate, forceParentToCheck bool) CertificateInfo {
 	status := OK
-	var messages []string
-
-	if parent == nil {
-		if bytes.Equal(cert.RawIssuer, cert.RawSubject) {
-			// Since the certificate is a self-signed root certificate, the signature check should not fail.
-			if err := cert.CheckSignatureFrom(cert); err != nil {
-				status = ERROR
-				messages = append(messages, err.Error())
-			}
-		} else {
-			if forceParentToCheck {
-				// Since the certificate is not a root certificate, it must be signed by a known authority.
-				status = ERROR
-				messages = append(messages, x509.UnknownAuthorityError{Cert: cert}.Error())
-			}
-		}
-	} else {
-		if err := cert.CheckSignatureFrom(parent); err != nil {
-			status = ERROR
-			messages = append(messages, err.Error()+" / parent certificate may not be correct issuer")
-		}
-	}
-
-	if _, err := x509util.VerifyValidity(cert, 0); err != nil {
-		status = ERROR
-		messages = append(messages, err.Error())
-	}
-
 	var message string
-	if len(messages) > 0 {
-		message = strings.Join(messages, " / ")
+
+	err := x509util.VerifyCertificate(cert, parent, forceParentToCheck)
+	if err != nil {
+		status = ERROR
+		message = err.Error()
 	}
 
 	certInfo := CertificateInfo{

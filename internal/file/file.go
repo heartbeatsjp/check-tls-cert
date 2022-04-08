@@ -10,6 +10,7 @@ import (
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
+	"github.com/mattn/go-colorable"
 )
 
 // Run checks certificates.
@@ -20,6 +21,8 @@ func Run(hostname string, keyFile string, certFile string, chainFile string, roo
 		password     []byte
 		err          error
 	)
+
+	checker.SetOutput(colorable.NewColorableStdout())
 
 	if rootFile != "" {
 		rootCerts, err = x509util.ParseCertificateFiles(rootFile)
