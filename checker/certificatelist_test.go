@@ -207,7 +207,7 @@ func TestCheckCertificateList(t *testing.T) {
 	//         Subject   : CN=server-b.test
 	//         Issuer    : CN=Intermediate CA B RSA
 	//         Expiration: 2022-06-22 15:08:25 +0900
-	//         Error     : crypto/rsa: verification error / parent certificate may not be correct issuer
+	//         Error     : x509: issuer name does not match subject from issuing certificate / crypto/rsa: verification error / parent certificate may not be correct issuer
 	//     - OK: Intermediate CA A RSA
 	//         Subject   : CN=Intermediate CA A RSA
 	//         Issuer    : CN=ROOT CA G2 RSA
@@ -221,7 +221,7 @@ func TestCheckCertificateList(t *testing.T) {
 	w.Reset()
 	state.Print()
 	assert.Equal(checker.CRITICAL, state.Status)
-	assert.Contains(w.String(), "CRITICAL: crypto/rsa: verification error / parent certificate may not be correct issuer")
+	assert.Contains(w.String(), "CRITICAL: x509: issuer name does not match subject from issuing certificate / crypto/rsa: verification error / parent certificate may not be correct issuer")
 
 	w.Reset()
 	state.PrintDetails(2, x509util.StrictDN)

@@ -17,13 +17,17 @@ import (
 	"github.com/heartbeatsjp/check-tls-cert/net/pop3util"
 	"github.com/heartbeatsjp/check-tls-cert/net/smtputil"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
+	"github.com/mattn/go-colorable"
 )
 
 type OCSPOption int
 
 const (
+	// Disable OCSP checker.
+	OCSPNo OCSPOption = iota
+
 	// Check the response from OCSP Stapling. If there is no OCSP response, the status will be "INFO".
-	OCSPAsIs OCSPOption = iota
+	OCSPAsIs
 
 	// Check the response from OCSP Stapling. If there is no OCSP response, retry the TLS connection up to two times every second. If there is still no OCSP response, the status will be "WARNING".
 	OCSPStapling
@@ -42,6 +46,8 @@ func Run(hostname string, ipAddress string, port uint16, network string, tlsMinV
 		rootCertPool *x509.CertPool
 		err          error
 	)
+
+	checker.SetOutput(colorable.NewColorableStdout())
 
 	if rootFile != "" {
 		rootCerts, err = x509util.ParseCertificateFiles(rootFile)
@@ -105,6 +111,7 @@ func Run(hostname string, ipAddress string, port uint16, network string, tlsMinV
 		} else {
 			stateList = append(stateList, checker.CheckOCSPResponder(connectionStateInfo.ServerCertificate(), connectionStateInfo.IssuerCertificate(), connectionStateInfo.IntermediateCertificates(), rootCertPool))
 		}
+	default:
 	}
 
 	stateList.Print(verbose, dnType)

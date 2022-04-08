@@ -163,36 +163,36 @@ func TestVerifyValidity(t *testing.T) {
 	assert.Contains(err.Error(), "the certificate is not yet valid and will be valid on ")
 }
 
-func TestGetRootCertPool(t *testing.T) {
+func TestGetRootCertPoolAndGetIntermediateCertPool(t *testing.T) {
 	var (
-		roots *x509.CertPool
-		err   error
-	)
-	assert := assert.New(t)
-
-	certFile := "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt"
-	certs, _ := x509util.ParseCertificateFiles(certFile)
-	roots, err = x509util.GetRootCertPool(certs, false)
-	assert.Nil(err)
-	assert.Equal(certs[0].RawSubject, roots.Subjects()[0])
-
-	roots, err = x509util.GetRootCertPool(certs, true)
-	assert.Nil(err)
-	assert.Equal(certs[0].RawSubject, roots.Subjects()[0])
-}
-
-func TestGetIntermediateCertPool(t *testing.T) {
-	var (
+		roots         *x509.CertPool
 		intermediates *x509.CertPool
+		chains        [][]*x509.Certificate
 		err           error
 	)
 	assert := assert.New(t)
 
-	certFile := "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt"
-	certs, _ := x509util.ParseCertificateFiles(certFile)
-	intermediates = x509util.GetIntermediateCertPool(certs)
+	rootCertFile := "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt"
+	intermediateCertFile := "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt"
+	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+
+	rootCerts, _ := x509util.ParseCertificateFiles(rootCertFile)
+	intermediateCerts, _ := x509util.ParseCertificateFiles(intermediateCertFile)
+	serverCert, _ := x509util.ParseCertificateFile(serverCertFile)
+
+	roots, err = x509util.GetRootCertPool(rootCerts, false)
 	assert.Nil(err)
-	assert.Equal(certs[0].RawSubject, intermediates.Subjects()[0])
+	intermediates = x509util.GetIntermediateCertPool(intermediateCerts)
+
+	opts := x509.VerifyOptions{
+		Roots:         roots,
+		Intermediates: intermediates,
+	}
+	chains, err = serverCert.Verify(opts)
+	assert.Nil(err)
+	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
+	assert.Equal("CN=ROOT CA G2 RSA", chains[0][2].Subject.String())
 }
 
 func TestBuildCertificateChains(t *testing.T) {
@@ -384,4 +384,91 @@ func TestBuildCertificateChains(t *testing.T) {
 	assert.Equal("CN=Intermediate CA A RSA", chains[1][1].Subject.String())
 	assert.Equal("CN=ROOT CA G2 RSA", chains[1][2].Subject.String())
 	assert.Equal("CN=ROOT CA G1 RSA", chains[1][3].Subject.String())
+}
+
+func TestVerifyCertificate(t *testing.T) {
+	var (
+		serverCert       *x509.Certificate
+		intermediateCert *x509.Certificate
+		rootCert         *x509.Certificate
+		err              error
+	)
+	assert := assert.New(t)
+
+	// CN=server-a.test (RSA)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	err = x509util.VerifyCertificate(serverCert, intermediateCert, false)
+	assert.Nil(err)
+	err = x509util.VerifyCertificate(intermediateCert, rootCert, false)
+	assert.Nil(err)
+	err = x509util.VerifyCertificate(rootCert, nil, false)
+	assert.Nil(err)
+	err = x509util.VerifyCertificate(rootCert, nil, true)
+	assert.Nil(err)
+
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA (root CA certificate not found)
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	err = x509util.VerifyCertificate(serverCert, intermediateCert, false)
+	assert.Nil(err)
+	err = x509util.VerifyCertificate(intermediateCert, nil, false)
+	assert.Nil(err)
+	err = x509util.VerifyCertificate(intermediateCert, nil, true)
+	assert.NotNil(err)
+	assert.ErrorContains(err, "x509: certificate signed by unknown authority")
+
+	// CN=server-a.test (expired)
+	// CN=Intermediate CA A RSA
+	// CN=ROOT CA G2 RSA
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/server-a-rsa.crt")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	err = x509util.VerifyCertificate(serverCert, intermediateCert, false)
+	assert.NotNil(err)
+	assert.ErrorContains(err, "the certificate has expired on ")
+	err = x509util.VerifyCertificate(intermediateCert, rootCert, false)
+	assert.Nil(err)
+
+	// CN=server-a.test
+	// CN=Intermediate CA A RSA (expired)
+	// CN=ROOT CA G2 RSA
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	err = x509util.VerifyCertificate(serverCert, intermediateCert, false)
+	assert.Nil(err)
+	err = x509util.VerifyCertificate(intermediateCert, rootCert, false)
+	assert.NotNil(err)
+	assert.ErrorContains(err, "the certificate has expired on ")
+
+	// CN=server-b.test
+	// CN=Intermediate CA A RSA (not an issuer of CN=server-b.test)
+	// CN=ROOT CA G2 RSA
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-rsa.crt")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	err = x509util.VerifyCertificate(serverCert, intermediateCert, false)
+	assert.NotNil(err)
+	assert.ErrorContains(err, "x509: issuer name does not match subject from issuing certificate / crypto/rsa: verification error / parent certificate may not be correct issuer")
+	err = x509util.VerifyCertificate(intermediateCert, rootCert, false)
+	assert.Nil(err)
+
+	// CN=Intermediate CA A RSA (specified file not correct)
+	// CN=server-a.test (RSA) (specified file not correct)
+	// CN=ROOT CA G2 RSA
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	err = x509util.VerifyCertificate(serverCert, intermediateCert, false)
+	assert.NotNil(err)
+	assert.ErrorContains(err, "x509: issuer name does not match subject from issuing certificate / x509: invalid signature: parent certificate cannot sign this kind of certificate / parent certificate may not be correct issuer")
+	err = x509util.VerifyCertificate(intermediateCert, rootCert, false)
+	assert.NotNil(err)
+	assert.ErrorContains(err, "x509: issuer name does not match subject from issuing certificate / crypto/rsa: verification error / parent certificate may not be correct issuer")
+
 }

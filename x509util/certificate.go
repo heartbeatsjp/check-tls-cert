@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -67,24 +68,6 @@ func ParseCertificateFile(certFile string) (cert *x509.Certificate, err error) {
 		return nil, errors.New("no PEM format")
 	}
 	return x509.ParseCertificate(block.Bytes)
-}
-
-// VerifyValidity verifies the validity of the certificate.
-func VerifyValidity(cert *x509.Certificate, days int) (message string, err error) {
-	currentTime := time.Now()
-	expirationDays := int(math.Ceil(cert.NotAfter.Sub(currentTime).Hours() / 24))
-
-	switch {
-	case cert.NotBefore.After(currentTime):
-		err = fmt.Errorf("the certificate is not yet valid and will be valid on %s", cert.NotBefore.Local().Format(timeFormat))
-	case cert.NotAfter.Before(currentTime):
-		err = fmt.Errorf("the certificate has expired on %s", cert.NotAfter.Local().Format(timeFormat))
-	case cert.NotAfter.Before(currentTime.AddDate(0, 0, days)):
-		err = fmt.Errorf("the certificate will expire in %d days on %s", expirationDays, cert.NotAfter.Local().Format(timeFormat))
-	default:
-		message = fmt.Sprintf("the certificate will expire in %d days on %s", expirationDays, cert.NotAfter.Local().Format(timeFormat))
-	}
-	return
 }
 
 // GetRootCertPool retrieves the root certificate pool.
@@ -160,4 +143,83 @@ func BuildCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPo
 	}
 
 	return chains
+}
+
+// VerifyValidity verifies the validity of the certificate.
+func VerifyValidity(cert *x509.Certificate, days int) (message string, err error) {
+	currentTime := time.Now()
+	expirationDays := int(math.Ceil(cert.NotAfter.Sub(currentTime).Hours() / 24))
+
+	switch {
+	case cert.NotBefore.After(currentTime):
+		err = fmt.Errorf("the certificate is not yet valid and will be valid on %s", cert.NotBefore.Local().Format(timeFormat))
+	case cert.NotAfter.Before(currentTime):
+		err = fmt.Errorf("the certificate has expired on %s", cert.NotAfter.Local().Format(timeFormat))
+	case cert.NotAfter.Before(currentTime.AddDate(0, 0, days)):
+		err = fmt.Errorf("the certificate will expire in %d days on %s", expirationDays, cert.NotAfter.Local().Format(timeFormat))
+	default:
+		message = fmt.Sprintf("the certificate will expire in %d days on %s", expirationDays, cert.NotAfter.Local().Format(timeFormat))
+	}
+	return
+}
+
+// VerifyCertificate verifies a certificate using the parent certificate.
+func VerifyCertificate(cert *x509.Certificate, parent *x509.Certificate, forceParentToCheck bool) error {
+	var messages []string
+
+	if len(cert.Raw) == 0 {
+		messages = append(messages, "certificate parse error")
+	}
+
+	if len(cert.UnhandledCriticalExtensions) > 0 {
+		messages = append(messages, x509.UnhandledCriticalExtension{}.Error())
+	}
+
+	if parent == nil {
+		if bytes.Equal(cert.RawIssuer, cert.RawSubject) && cert.BasicConstraintsValid && cert.IsCA {
+			// Since the certificate is a self-signed root certificate, the signature check should not fail.
+			if err := cert.CheckSignatureFrom(cert); err != nil {
+				// Workaround for SHA-1 signatures.
+				// If an error occurs due to a SHA-1 signature, ignore it.
+				var ignoreError = false
+				switch e := err.(type) {
+				case x509.InsecureAlgorithmError:
+					if x509.SignatureAlgorithm(e) == x509.SHA1WithRSA || x509.SignatureAlgorithm(e) == x509.ECDSAWithSHA1 {
+						ignoreError = true
+					}
+				}
+				if !ignoreError {
+					messages = append(messages, err.Error())
+				}
+			}
+		} else {
+			if forceParentToCheck {
+				// Since the certificate is not a root certificate, it must be signed by a known authority.
+				messages = append(messages, x509.UnknownAuthorityError{Cert: cert}.Error())
+			}
+		}
+	} else {
+		if len(parent.Raw) == 0 {
+			messages = append(messages, "parent certificate parse error")
+		}
+
+		if !bytes.Equal(cert.RawIssuer, parent.RawSubject) {
+			err := x509.CertificateInvalidError{Cert: cert, Reason: x509.NameMismatch, Detail: ""}
+			messages = append(messages, err.Error())
+		}
+
+		if err := cert.CheckSignatureFrom(parent); err != nil {
+			messages = append(messages, err.Error()+" / parent certificate may not be correct issuer")
+		}
+	}
+
+	if _, err := VerifyValidity(cert, 0); err != nil {
+		messages = append(messages, err.Error())
+	}
+
+	if len(messages) > 0 {
+		return errors.New(strings.Join(messages, " / "))
+	}
+
+	return nil
 }
