@@ -14,7 +14,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.18.0"
+          go-version: "1.18.1"
 
       - name: Install dependency
         run: go get -t -v ./...
@@ -39,7 +39,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.18.0"
+          go-version: "1.18.1"
 
       - name: Create Release
         id: create_release
@@ -85,7 +85,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v3
         with:
-          go-version: "1.18.0"
+          go-version: "1.18.1"
 
       - name: Prepare artifact
         run: |
