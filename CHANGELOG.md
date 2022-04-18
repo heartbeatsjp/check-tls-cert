@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 0.9.0 (2022-04-18)
+
+### Feature
+
+- Add an option `--output-format` [#35]
+- Add support JSON format [#35]
+
 ## 0.8.0 (2022-04-08)
 
 ### Feature
