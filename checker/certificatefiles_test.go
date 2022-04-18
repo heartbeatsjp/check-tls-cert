@@ -300,15 +300,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
             - INFO: ROOT CA G1 RSA
               Subject   : CN=ROOT CA G1 RSA
               Issuer    : CN=ROOT CA G1 RSA
-              Expiration: 2035-01-01 09:00:00 +0900
-            - INFO: ROOT CA G2 RSA
-              Subject   : CN=ROOT CA G2 RSA
-              Issuer    : CN=ROOT CA G2 RSA
-              Expiration: 2035-01-01 09:00:00 +0900
-            - INFO: ROOT CA G2 ECDSA
-              Subject   : CN=ROOT CA G2 ECDSA
-              Issuer    : CN=ROOT CA G2 ECDSA
-              Expiration: 2035-01-01 09:00:00 +0900`)
+              Expiration: `)
 
 	// OK
 	//
@@ -421,16 +413,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
             - INFO: ROOT CA G1 RSA
               Subject   : CN=ROOT CA G1 RSA
               Issuer    : CN=ROOT CA G1 RSA
-              Expiration: 2035-01-01 09:00:00 +0900
-            - INFO: ROOT CA G2 RSA
-              Subject   : CN=ROOT CA G2 RSA
-              Issuer    : CN=ROOT CA G2 RSA
-              Expiration: 2035-01-01 09:00:00 +0900
-            - INFO: ROOT CA G2 ECDSA
-              Subject   : CN=ROOT CA G2 ECDSA
-              Issuer    : CN=ROOT CA G2 ECDSA
-              Expiration: 2035-01-01 09:00:00 +0900`)
-
+              Expiration: `)
 }
 
 func TestCertificateFilesChecker(t *testing.T) {
