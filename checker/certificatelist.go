@@ -7,38 +7,26 @@ package checker
 import (
 	"crypto/x509"
 	"strings"
-
-	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
-// CheckCertificateList checks peer certificates.
-func CheckCertificateList(certs []*x509.Certificate) State {
+// CertificateListChecker represents wheather peer certificates are valid.
+type CertificateListChecker struct {
+	name    string
+	status  Status
+	message string
+	details CertificateListDetails
+}
+
+func NewCertificateListChecker(certs []*x509.Certificate) *CertificateListChecker {
 	const name = "Peer Certificate List"
 
 	n := len(certs)
 	certInfoList := make([]CertificateInfo, n)
 
-	printDetails := func(verbose int, dnType x509util.DNType) {
-		for _, certInfo := range certInfoList {
-			printDetailsLine(4, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
-
-			printDetailsLine(8, "Subject   : %v", x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
-			printDetailsLine(8, "Issuer    : %v", x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
-			printDetailsLine(8, "Expiration: %v", certInfo.Certificate.NotAfter.Local().Format(timeFormat))
-			if certInfo.Message != "" {
-				if certInfo.Status == ERROR {
-					printDetailsLine(8, "Error     : %s", certInfo.Message)
-				} else {
-					printDetailsLine(8, "Message   : %s", certInfo.Message)
-				}
-			}
-		}
-	}
-
 	var parent *x509.Certificate
 	for i := 0; i < n; i++ {
 		cert := certs[n-i-1]
-		certInfo := getCertificateInfo(cert, parent, false)
+		certInfo := NewCertificateInfo(cert, parent, false)
 		certInfoList[n-i-1] = certInfo
 		parent = cert
 	}
@@ -50,7 +38,7 @@ func CheckCertificateList(certs []*x509.Certificate) State {
 	for _, certInfo := range certInfoList {
 		if certInfo.Status == ERROR {
 			status = CRITICAL
-			messages = append(messages, certInfo.Message)
+			messages = append(messages, certInfo.Error)
 		}
 	}
 
@@ -63,12 +51,53 @@ func CheckCertificateList(certs []*x509.Certificate) State {
 		message = "no certificate"
 	}
 
-	state := State{
-		Name:         name,
-		Status:       status,
-		Message:      message,
-		Data:         certInfoList,
-		PrintDetails: printDetails,
+	details := NewCertificateListDetails(certInfoList)
+
+	return &CertificateListChecker{
+		name:    name,
+		status:  status,
+		message: message,
+		details: details,
 	}
-	return state
+}
+
+func (c *CertificateListChecker) Name() string {
+	return c.name
+}
+
+func (c *CertificateListChecker) Status() Status {
+	return c.status
+}
+
+func (c *CertificateListChecker) Message() string {
+	return c.message
+}
+
+func (c *CertificateListChecker) Details() interface{} {
+	return c.details
+}
+
+func (c *CertificateListChecker) PrintName() {
+	printCheckerName(c)
+}
+
+func (c *CertificateListChecker) PrintStatus() {
+	printCheckerStatus(c)
+}
+
+func (c *CertificateListChecker) PrintDetails() {
+	for _, certInfo := range c.details {
+		printIndentedLine(4, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
+		printKeyValueIfExists(8, "Subject   ", certInfo.Subject)
+		printKeyValueIfExists(8, "Issuer    ", certInfo.Issuer)
+		printKeyValueIfExists(8, "Expiration", certInfo.Expiration)
+		printKeyValueIfExists(8, "Message   ", certInfo.Message)
+		printKeyValueIfExists(8, "Error     ", certInfo.Error)
+	}
+}
+
+type CertificateListDetails []CertificateInfo
+
+func NewCertificateListDetails(list []CertificateInfo) CertificateListDetails {
+	return list
 }

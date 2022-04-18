@@ -17,17 +17,20 @@ import (
 	"golang.org/x/crypto/ocsp"
 )
 
-func TestCheckOCSPStapling(t *testing.T) {
+func TestNewOCSPStaplingChecker(t *testing.T) {
 	var (
-		state    checker.State
+		c        checker.Checker
 		template ocsp.Response
 		response []byte
 	)
+	assert := assert.New(t)
 	w := strings.Builder{}
 	checker.SetOutput(&w)
-	assert := assert.New(t)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
 
-	privateKeyInfo, _ := x509util.ParsePrivateKeyFile("../test/testdata/pki/private/ca-intermediate-a-rsa-ocsp-responder.key", nil)
+	privKeyInfo, _ := x509util.ParsePrivateKeyFile("../test/testdata/pki/private/ca-intermediate-a-rsa-ocsp-responder.key", nil)
 	responderCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa-ocsp-responder.crt")
 	issuerCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
 	targetCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
@@ -35,30 +38,30 @@ func TestCheckOCSPStapling(t *testing.T) {
 	rootCerts, _ := x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root.pem")
 	rootCertPool, _ := x509util.GetRootCertPool(rootCerts, false)
 
-	priv := privateKeyInfo.Key.(*rsa.PrivateKey)
+	priv := privKeyInfo.Key.(*rsa.PrivateKey)
 
 	// no response, no issuer
-	state = checker.CheckOCSPStapling([]byte{}, nil, intermediateCerts, rootCertPool, true)
-	assert.Equal(checker.INFO, state.Status)
-	assert.Equal("no response sent", state.Message)
+	c = checker.NewOCSPStaplingChecker([]byte{}, nil, intermediateCerts, rootCertPool, true)
+	assert.Equal(checker.INFO, c.Status())
+	assert.Equal("no response sent", c.Message())
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
 	// no response
-	state = checker.CheckOCSPStapling([]byte{}, issuerCert, intermediateCerts, rootCertPool, true)
-	assert.Equal(checker.INFO, state.Status)
-	assert.Equal("no response sent", state.Message)
+	c = checker.NewOCSPStaplingChecker([]byte{}, issuerCert, intermediateCerts, rootCertPool, true)
+	assert.Equal(checker.INFO, c.Status())
+	assert.Equal("no response sent", c.Message())
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
 	// no response
-	state = checker.CheckOCSPStapling([]byte{}, issuerCert, intermediateCerts, rootCertPool, false)
-	assert.Equal(checker.WARNING, state.Status)
-	assert.Equal("ocsp: no response sent", state.Message)
+	c = checker.NewOCSPStaplingChecker([]byte{}, issuerCert, intermediateCerts, rootCertPool, false)
+	assert.Equal(checker.WARNING, c.Status())
+	assert.Equal("ocsp: no response sent", c.Message())
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Equal(w.String(), "WARNING: ocsp: no response sent\n")
 
 	// Response status: good
@@ -90,16 +93,16 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCertPool, true)
-	assert.Equal(checker.OK, state.Status)
-	assert.Equal("certificate is valid", state.Message)
+	c = checker.NewOCSPStaplingChecker(response, issuerCert, intermediateCerts, rootCertPool, true)
+	assert.Equal(checker.OK, c.Status())
+	assert.Equal("certificate is valid", c.Message())
 
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Equal(w.String(), "OK: certificate is valid\n")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    OCSP Response Data:
         OCSP Response Status: successful (0x0)
         Cert Status: good
@@ -143,16 +146,16 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:       time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCertPool, true)
-	assert.Equal(checker.CRITICAL, state.Status)
-	assert.Equal("certificate has been deliberately revoked", state.Message)
+	c = checker.NewOCSPStaplingChecker(response, issuerCert, intermediateCerts, rootCertPool, true)
+	assert.Equal(checker.CRITICAL, c.Status())
+	assert.Equal("certificate has been deliberately revoked", c.Message())
 
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Equal(w.String(), "CRITICAL: certificate has been deliberately revoked\n")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    OCSP Response Data:
         OCSP Response Status: successful (0x0)
         Cert Status: revoked
@@ -194,16 +197,16 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCertPool, true)
-	assert.Equal(checker.CRITICAL, state.Status)
-	assert.Equal("OCSP responder doesn't know about the certificate", state.Message)
+	c = checker.NewOCSPStaplingChecker(response, issuerCert, intermediateCerts, rootCertPool, true)
+	assert.Equal(checker.CRITICAL, c.Status())
+	assert.Equal("OCSP responder doesn't know about the certificate", c.Message())
 
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Equal(w.String(), "CRITICAL: OCSP responder doesn't know about the certificate\n")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    OCSP Response Data:
         OCSP Response Status: successful (0x0)
         Cert Status: unknown
@@ -245,16 +248,69 @@ func TestCheckOCSPStapling(t *testing.T) {
 		NextUpdate:   time.Now().AddDate(0, 0, 2),
 	}
 	response, _ = ocsp.CreateResponse(issuerCert, responderCert, template, priv)
-	state = checker.CheckOCSPStapling(response, issuerCert, intermediateCerts, rootCertPool, true)
-	assert.Equal(checker.CRITICAL, state.Status)
-	assert.Contains(state.Message, "ocsp: OCSP response signer's certificate error: x509: certificate has expired or is not yet valid:")
+	c = checker.NewOCSPStaplingChecker(response, issuerCert, intermediateCerts, rootCertPool, true)
+	assert.Equal(checker.CRITICAL, c.Status())
+	assert.Contains(c.Message(), "ocsp: OCSP response signer's certificate error: x509: certificate has expired or is not yet valid:")
 
 	w.Reset()
-	state.Print()
+	c.PrintStatus()
 	assert.Contains(w.String(), "CRITICAL: ocsp: OCSP response signer's certificate error: x509: certificate has expired or is not yet valid:")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
+	assert.Contains(w.String(), `    OCSP Response Data:
+        OCSP Response Status: successful (0x0)
+        Cert Status: good
+`)
+	assert.Contains(w.String(), `    Certificate:
+        Issuer : CN=Intermediate CA A RSA
+        Subject: CN=Intermediate CA A RSA OCSP Responder
+        Validity:
+`)
+}
+
+func TestOCSPStaplingChecker(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
+
+	privKeyInfo, _ := x509util.ParsePrivateKeyFile("../test/testdata/pki/private/ca-intermediate-a-rsa-ocsp-responder.key", nil)
+	responderCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa-ocsp-responder.crt")
+	issuerCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	targetCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	intermediateCerts := []*x509.Certificate{issuerCert}
+	rootCerts, _ := x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root.pem")
+	rootCertPool, _ := x509util.GetRootCertPool(rootCerts, false)
+
+	priv := privKeyInfo.Key.(*rsa.PrivateKey)
+
+	template := ocsp.Response{
+		SerialNumber: targetCert.SerialNumber,
+		Certificate:  responderCert,
+		Status:       ocsp.Good,
+		ThisUpdate:   time.Now().AddDate(0, 0, -2),
+		NextUpdate:   time.Now().AddDate(0, 0, 2),
+	}
+	response, err := ocsp.CreateResponse(issuerCert, responderCert, template, priv)
+	assert.Nil(err)
+	c := checker.NewOCSPStaplingChecker(response, issuerCert, intermediateCerts, rootCertPool, true)
+	assert.Equal("OCSP Stapling", c.Name())
+	assert.Equal(checker.OK, c.Status())
+	assert.Equal("certificate is valid", c.Message())
+	assert.Equal("good", c.Details().(*checker.OCSPResponseDetails).OCSPResponseData.CertStatus)
+
+	c.PrintName()
+	assert.Equal("[OCSP Stapling]\n", w.String())
+
+	w.Reset()
+	c.PrintStatus()
+	assert.Equal("OK: certificate is valid\n", w.String())
+
+	w.Reset()
+	c.PrintDetails()
 	assert.Contains(w.String(), `    OCSP Response Data:
         OCSP Response Status: successful (0x0)
         Cert Status: good

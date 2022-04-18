@@ -8,36 +8,58 @@ import (
 	"fmt"
 	"os"
 
-	file "github.com/heartbeatsjp/check-tls-cert/internal/file"
+	"github.com/heartbeatsjp/check-tls-cert/checker"
+	filecmd "github.com/heartbeatsjp/check-tls-cert/internal/file"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
 var (
-	keyFile      string
-	certFile     string
-	chainFile    string
-	caFile       string
-	passwordFile string
+	keyFile        string
+	certFile       string
+	chainFile      string
+	caFile         string
+	passwordFile   string
+	fileCmdOptions filecmd.FileCommandOptions
 
 	fileCmd = &cobra.Command{
 		Use:   "file",
 		Short: "Checks TLS certificate files.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			dntype, err := parseDNType(dnType)
-			if err != nil {
-				fmt.Printf("ERROR: %s\n", err.Error())
-			}
-
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 			keyFile, _ = homedir.Expand(keyFile)
 			certFile, _ = homedir.Expand(certFile)
 			chainFile, _ = homedir.Expand(chainFile)
-			rootFile, _ = homedir.Expand(rootFile)
 			passwordFile, _ = homedir.Expand(passwordFile)
 
-			code, err := file.Run(hostname, keyFile, certFile, chainFile, rootFile, caFile, passwordFile, warning, critical, enableSSLCertDir, dntype, verbose)
+			fileCmdOptions = filecmd.FileCommandOptions{
+				Hostname:         hostname,
+				KeyFile:          keyFile,
+				CertFile:         certFile,
+				ChainFile:        chainFile,
+				CAFile:           caFile,
+				PasswordFile:     passwordFile,
+				Warning:          warning,
+				Critical:         critical,
+				RootFile:         rootFile,
+				EnableSSLCertDir: enableSSLCertDir,
+				OutputFormat:     outputFormat,
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			code, err := filecmd.Run(fileCmdOptions)
 			if err != nil {
-				fmt.Printf("ERROR: %s\n", err.Error())
+				switch outputFormat {
+				case checker.JSONFormat:
+					r := checker.NewResult(checker.NewErrorSummary(err), nil)
+					r.PrintJSON()
+					os.Exit(checker.UNKNOWN.Code())
+				default:
+					fmt.Printf("Error: %s\n", err.Error())
+					os.Exit(checker.UNKNOWN.Code())
+				}
+				return err
 			}
 			os.Exit(code)
 			return nil
@@ -55,6 +77,9 @@ func init() {
 	fileCmd.Flags().StringVarP(&chainFile, "chain-file", "C", "", "certificate chain `file`. It includes intermediate certificates. Used for the SSLCertificateChainFile directive in old Apache HTTP Server.")
 	fileCmd.Flags().StringVar(&caFile, "ca-file", "", "trusted CA certificates `file`. It includes intermediate certificates and a root certificate. Used for the ssl_trusted_certificate directive in nginx and the SSLCACertificateFile directive in Apache HTTP Server.")
 	fileCmd.Flags().StringVarP(&passwordFile, "password-file", "P", "", "password `file` for the private key file if the private key file is encrypted. If it is not specified, you will be prompted to enter the password.")
+	fileCmd.Flags().IntVarP(&warning, "warning", "w", 28, "warning threshold in `days` before expiration date")
+	fileCmd.Flags().IntVarP(&critical, "critical", "c", 14, "critical threshold in `days` before expiration date")
+	fileCmd.Flags().SortFlags = false
 
 	rootCmd.AddCommand(fileCmd)
 }

@@ -7,23 +7,18 @@ package checker
 import (
 	"crypto/x509"
 	"fmt"
-
-	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
-// CheckHostname checks whether the hostname is valid for the certificate.
-func CheckHostname(hostname string, cert *x509.Certificate) State {
-	const name = "Hostname"
+// HostnameChecker represents whether a hostname is valid for a certificate.
+type HostnameChecker struct {
+	name    string
+	status  Status
+	message string
+	details *HostnameDetails
+}
 
-	printDetails := func(verbose int, dnType x509util.DNType) {
-		printDetailsLine(4, "Common Name: %s", cert.Subject.CommonName)
-		if len(cert.DNSNames) > 0 {
-			printDetailsLine(4, "Subject Alternative Names:")
-			for _, dnsName := range cert.DNSNames {
-				printDetailsLine(4, "    DNS: %s", dnsName)
-			}
-		}
-	}
+func NewHostnameChecker(hostname string, cert *x509.Certificate) *HostnameChecker {
+	const name = "Hostname"
 
 	var (
 		status  Status
@@ -39,12 +34,55 @@ func CheckHostname(hostname string, cert *x509.Certificate) State {
 		message = fmt.Sprintf("the hostname '%s' is valid for the certificate", hostname)
 	}
 
-	state := State{
-		Name:         name,
-		Status:       status,
-		Message:      message,
-		Data:         cert,
-		PrintDetails: printDetails,
+	details := NewHostnameDetails(cert)
+
+	return &HostnameChecker{
+		name:    name,
+		status:  status,
+		message: message,
+		details: details,
 	}
-	return state
+}
+
+func (c *HostnameChecker) Name() string {
+	return c.name
+}
+
+func (c *HostnameChecker) Status() Status {
+	return c.status
+}
+
+func (c *HostnameChecker) Message() string {
+	return c.message
+}
+
+func (c *HostnameChecker) Details() interface{} {
+	return c.details
+}
+
+func (c *HostnameChecker) PrintName() {
+	printCheckerName(c)
+}
+
+func (c *HostnameChecker) PrintStatus() {
+	printCheckerStatus(c)
+}
+
+func (c *HostnameChecker) PrintDetails() {
+	printKeyValueIfExists(4, "Common Name", c.details.CommonName)
+	if len(c.details.SubjectAltName) > 0 {
+		printSubjectAltName(4, c.details.SubjectAltName)
+	}
+}
+
+type HostnameDetails struct {
+	CommonName     string           `json:"commonName"`
+	SubjectAltName []subjectAltName `json:"subjectAltName,omitempty"`
+}
+
+func NewHostnameDetails(cert *x509.Certificate) *HostnameDetails {
+	return &HostnameDetails{
+		CommonName:     cert.Subject.CommonName,
+		SubjectAltName: getSubjectAltNames(cert),
+	}
 }

@@ -11,66 +11,18 @@ import (
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
-// CertificateFileInfo describes an information in a certificate file.
-type CertificateFileInfo struct {
-	Label               string
-	Name                string
-	Status              Status
-	Message             string
-	CertificateInfoList []CertificateInfo
-	isRoot              bool
+// CertificateFilesChecker represents certificate files are.
+type CertificateFilesChecker struct {
+	name    string
+	status  Status
+	message string
+	details CertificateFilesDetails
 }
 
-// CheckCertificateFiles checks files.
-func CheckCertificateFiles(certFile string, chainFile string, caFile string, rootFile string) State {
+func NewCertificateFilesChecker(certFile string, chainFile string, caFile string, rootFile string) *CertificateFilesChecker {
 	const name = "Certificate Files"
 
 	var certFileInfoList []CertificateFileInfo
-
-	printDetails := func(verbose int, dnType x509util.DNType) {
-		for _, certFileInfo := range certFileInfoList {
-			printDetailsLine(4, "%s: %s", certFileInfo.Status.ColorString(), certFileInfo.Label)
-
-			printDetailsLine(8, "File: %s", certFileInfo.Name)
-			if certFileInfo.Message != "" {
-				if certFileInfo.Status == ERROR {
-					printDetailsLine(8, "Error: %s", certFileInfo.Message)
-				} else {
-					printDetailsLine(8, "Message: %s", certFileInfo.Message)
-				}
-			}
-			if len(certFileInfo.CertificateInfoList) == 0 {
-				continue
-			}
-
-			printDetailsLine(8, "Certificate:")
-			if !certFileInfo.isRoot {
-				for _, certInfo := range certFileInfo.CertificateInfoList {
-					printDetailsLine(12, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
-					printDetailsLine(12, "  Subject   : %s", x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
-					printDetailsLine(12, "  Issuer    : %s", x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
-					printDetailsLine(12, "  Expiration: %v", certInfo.Certificate.NotAfter.Local().Format(timeFormat))
-					if certInfo.Message != "" {
-						if certInfo.Status == ERROR {
-							printDetailsLine(12, "  Error     : %s", certInfo.Message)
-						} else {
-							printDetailsLine(12, "  Message   : %s", certInfo.Message)
-						}
-					}
-				}
-			} else {
-				// Root Certificates File (list only, unverified)
-				const maxCert = 3
-				for i, certInfo := range certFileInfo.CertificateInfoList {
-					printDetailsLine(12, "- %s", certInfo.CommonName)
-					if i >= maxCert {
-						printDetailsLine(12, "- ...(omitted)")
-						break
-					}
-				}
-			}
-		}
-	}
 
 	var (
 		certFileInfo      CertificateFileInfo
@@ -79,11 +31,11 @@ func CheckCertificateFiles(certFile string, chainFile string, caFile string, roo
 	)
 
 	if chainFile != "" {
-		chainCertFileInfo, parent = getCertificateFileInfo("Certificate Chain File", chainFile, nil, false)
+		chainCertFileInfo, parent = NewCertificateFileInfo("Certificate Chain File", chainFile, nil, false)
 	}
 
 	if certFile != "" {
-		certFileInfo, _ = getCertificateFileInfo("Certificate File", certFile, parent, false)
+		certFileInfo, _ = NewCertificateFileInfo("Certificate File", certFile, parent, false)
 		certFileInfoList = append(certFileInfoList, certFileInfo)
 	}
 
@@ -92,79 +44,166 @@ func CheckCertificateFiles(certFile string, chainFile string, caFile string, roo
 	}
 
 	if caFile != "" {
-		certFileInfo, _ = getCertificateFileInfo("CA Certificate File", caFile, nil, false)
+		certFileInfo, _ = NewCertificateFileInfo("CA Certificate File", caFile, nil, false)
 		certFileInfoList = append(certFileInfoList, certFileInfo)
 	}
 
 	if rootFile != "" {
-		certFileInfo, _ = getCertificateFileInfo("Root Certificates File (list only, unverified)", rootFile, nil, true)
+		certFileInfo, _ = NewCertificateFileInfo("Root Certificates File (list only, unverified)", rootFile, nil, true)
 		certFileInfoList = append(certFileInfoList, certFileInfo)
 	}
 
 	status := OK
 	message := "all files contain one or more certificates"
-	var messages []string
+	var errmsgs []string
 
 	for _, certFileInfo := range certFileInfoList {
 		if certFileInfo.Status == ERROR {
 			status = CRITICAL
-			messages = append(messages, certFileInfo.Message)
+			errmsgs = append(errmsgs, certFileInfo.Error)
 		}
 	}
 
-	if len(messages) > 0 {
-		message = strings.Join(messages, " / ")
+	if len(errmsgs) > 0 {
+		message = strings.Join(errmsgs, " / ")
 	}
 
-	state := State{
-		Name:         name,
-		Status:       status,
-		Message:      message,
-		Data:         certFileInfoList,
-		PrintDetails: printDetails,
+	details := NewCertificateFilesDetails(certFileInfoList)
+
+	return &CertificateFilesChecker{
+		name:    name,
+		status:  status,
+		message: message,
+		details: details,
 	}
-	return state
 }
 
-func getCertificateFileInfo(label string, certFile string, parent *x509.Certificate, isRoot bool) (CertificateFileInfo, *x509.Certificate) {
+func (c *CertificateFilesChecker) Name() string {
+	return c.name
+}
+
+func (c *CertificateFilesChecker) Status() Status {
+	return c.status
+}
+func (c *CertificateFilesChecker) Message() string {
+	return c.message
+}
+
+func (c *CertificateFilesChecker) Details() interface{} {
+	return c.details
+}
+
+func (c *CertificateFilesChecker) PrintName() {
+	printCheckerName(c)
+}
+
+func (c *CertificateFilesChecker) PrintStatus() {
+	printCheckerStatus(c)
+}
+
+func (c *CertificateFilesChecker) PrintDetails() {
+	for _, certFileInfo := range c.details {
+		printIndentedLine(4, "%s: %s", certFileInfo.Status.ColorString(), certFileInfo.Name)
+
+		printKeyValueIfExists(8, "File", certFileInfo.File)
+		printKeyValueIfExists(8, "Error", certFileInfo.Error)
+		if len(certFileInfo.CertificateInfoList) == 0 {
+			continue
+		}
+
+		printIndentedLine(8, "Certificate:")
+		if !certFileInfo.isRoot {
+			for _, certInfo := range certFileInfo.CertificateInfoList {
+				printIndentedLine(12, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
+				printKeyValueIfExists(14, "Subject   ", certInfo.Subject)
+				printKeyValueIfExists(14, "Issuer    ", certInfo.Issuer)
+				printKeyValueIfExists(14, "Expiration", certInfo.Expiration)
+				printKeyValueIfExists(14, "Message   ", certInfo.Message)
+				printKeyValueIfExists(14, "Error     ", certInfo.Error)
+			}
+		} else {
+			// Root Certificates File (list only, unverified)
+			const maxCert = 3
+			for i, certInfo := range certFileInfo.CertificateInfoList {
+				printIndentedLine(12, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
+				printKeyValueIfExists(14, "Subject   ", certInfo.Subject)
+				printKeyValueIfExists(14, "Issuer    ", certInfo.Issuer)
+				printKeyValueIfExists(14, "Expiration", certInfo.Expiration)
+				if i >= maxCert {
+					printIndentedLine(12, "- ...(omitted)")
+					break
+				}
+			}
+		}
+	}
+}
+
+// CertificateFileInfo describes an information in a certificate file.
+type CertificateFileInfo struct {
+	Name                string            `json:"name"`
+	File                string            `json:"file"`
+	Status              Status            `json:"-"`
+	StatusString        string            `json:"status"`
+	Error               string            `json:"error,omitempty"`
+	CertificateInfoList []CertificateInfo `json:"certificate"`
+	isRoot              bool              `json:"-"`
+}
+
+func NewCertificateFileInfo(name string, certFile string, parent *x509.Certificate, isRoot bool) (CertificateFileInfo, *x509.Certificate) {
 	status := OK
-	var message string
+	var errmsg string
 	var certInfoList []CertificateInfo
 
 	certs, err := x509util.ParseCertificateFiles(certFile)
 	if err != nil {
 		status = ERROR
-		message = err.Error()
+		errmsg = err.Error()
 	} else if isRoot {
 		for _, cert := range certs {
 			certInfo := CertificateInfo{
-				CommonName:  cert.Subject.CommonName,
-				Certificate: cert,
+				CommonName:   cert.Subject.CommonName,
+				Status:       INFO,
+				StatusString: INFO.String(),
+				Subject:      x509util.DistinguishedName(cert.Subject, dnType),
+				Issuer:       x509util.DistinguishedName(cert.Issuer, dnType),
+				Expiration:   cert.NotAfter.Local().Format(timeFormat),
 			}
 			certInfoList = append(certInfoList, certInfo)
 		}
 	} else {
+		var errmsgs []string
 		n := len(certs)
 		certInfoList = make([]CertificateInfo, n)
 		for i := 0; i < n; i++ {
 			cert := certs[n-i-1]
-			certInfo := getCertificateInfo(cert, parent, false)
+			certInfo := NewCertificateInfo(cert, parent, false)
 			if certInfo.Status == ERROR {
 				status = ERROR
+				errmsgs = append(errmsgs, certInfo.Error)
 			}
 			certInfoList[n-i-1] = certInfo
 			parent = cert
 		}
+		if len(errmsgs) > 0 {
+			errmsg = strings.Join(errmsgs, " / ")
+		}
 	}
 
 	certFileInfo := CertificateFileInfo{
-		Label:               label,
-		Name:                certFile,
+		Name:                name,
+		File:                certFile,
 		Status:              status,
-		Message:             message,
+		StatusString:        status.String(),
+		Error:               errmsg,
 		CertificateInfoList: certInfoList,
 		isRoot:              isRoot,
 	}
 
 	return certFileInfo, parent
+}
+
+type CertificateFilesDetails []CertificateFileInfo
+
+func NewCertificateFilesDetails(list []CertificateFileInfo) CertificateFilesDetails {
+	return list
 }

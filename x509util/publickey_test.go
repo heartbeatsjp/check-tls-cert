@@ -14,32 +14,47 @@ import (
 func TestExtractPublicKey(t *testing.T) {
 	assert := assert.New(t)
 
-	privateKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
+	privKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
 	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
-	privateKeyInfo, _ := x509util.ParsePrivateKeyFile(privateKeyFile, nil)
-	publicKeyInfoInPrivateKey, _ := x509util.ExtractPublicKeyFromPrivateKey(privateKeyInfo)
-	publicKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(certs[0])
-	assert.Equal(publicKeyInfo.Key, publicKeyInfoInPrivateKey.Key)
-	assert.Equal(publicKeyInfo.PublicKeyAlgorithm, publicKeyInfoInPrivateKey.PublicKeyAlgorithm)
+	pubKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(certs[0])
+	privKeyInfo, _ := x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	pubKeyInfoInPrivKey, _ := x509util.ExtractPublicKeyFromPrivateKey(privKeyInfo)
+	assert.NotNil(pubKeyInfoInPrivKey)
+	assert.NotNil(pubKeyInfo)
+	assert.Equal("Certificate", pubKeyInfo.SourceName)
+	assert.Equal("Private Key", pubKeyInfoInPrivKey.SourceName)
+	pubKeyInfo.SourceName = ""
+	pubKeyInfoInPrivKey.SourceName = ""
+	assert.EqualValues(pubKeyInfo, pubKeyInfoInPrivKey)
 
-	privateKeyFile = "../test/testdata/pki/private/server-a-ecdsa.key"
+	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa.key"
 	certFile = "../test/testdata/pki/cert/valid/server-a-ecdsa.crt"
 	certs, _ = x509util.ParseCertificateFiles(certFile)
-	privateKeyInfo, _ = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
-	publicKeyInfoInPrivateKey, _ = x509util.ExtractPublicKeyFromPrivateKey(privateKeyInfo)
-	publicKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
-	assert.Equal(publicKeyInfo.Key, publicKeyInfoInPrivateKey.Key)
-	assert.Equal(publicKeyInfo.PublicKeyAlgorithm, publicKeyInfoInPrivateKey.PublicKeyAlgorithm)
+	pubKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
+	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	pubKeyInfoInPrivKey, _ = x509util.ExtractPublicKeyFromPrivateKey(privKeyInfo)
+	assert.NotNil(pubKeyInfoInPrivKey)
+	assert.NotNil(pubKeyInfo)
+	assert.Equal("Certificate", pubKeyInfo.SourceName)
+	assert.Equal("Private Key", pubKeyInfoInPrivKey.SourceName)
+	pubKeyInfo.SourceName = ""
+	pubKeyInfoInPrivKey.SourceName = ""
+	assert.EqualValues(pubKeyInfo, pubKeyInfoInPrivKey)
 
-	privateKeyFile = "../test/testdata/pki/private/server-a-ed25519.key"
+	privKeyFile = "../test/testdata/pki/private/server-a-ed25519.key"
 	certFile = "../test/testdata/pki/cert/valid/server-a-ed25519.crt"
 	certs, _ = x509util.ParseCertificateFiles(certFile)
-	privateKeyInfo, _ = x509util.ParsePrivateKeyFile(privateKeyFile, nil)
-	publicKeyInfoInPrivateKey, _ = x509util.ExtractPublicKeyFromPrivateKey(privateKeyInfo)
-	publicKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
-	assert.Equal(publicKeyInfo.Key, publicKeyInfoInPrivateKey.Key)
-	assert.Equal(publicKeyInfo.PublicKeyAlgorithm, publicKeyInfoInPrivateKey.PublicKeyAlgorithm)
+	pubKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
+	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	pubKeyInfoInPrivKey, _ = x509util.ExtractPublicKeyFromPrivateKey(privKeyInfo)
+	assert.NotNil(pubKeyInfoInPrivKey)
+	assert.NotNil(pubKeyInfo)
+	assert.Equal("Certificate", pubKeyInfo.SourceName)
+	assert.Equal("Private Key", pubKeyInfoInPrivKey.SourceName)
+	pubKeyInfo.SourceName = ""
+	pubKeyInfoInPrivKey.SourceName = ""
+	assert.EqualValues(pubKeyInfo, pubKeyInfoInPrivKey)
 }
 
 func TestEncode2DigitHex(t *testing.T) {

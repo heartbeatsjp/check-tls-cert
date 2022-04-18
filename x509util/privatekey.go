@@ -26,7 +26,7 @@ type PrivateKeyInfo struct {
 }
 
 // ParsePrivateKeyFile parses a private key file in PEM format and returns a private key.
-func ParsePrivateKeyFile(keyFile string, password []byte) (privateKeyInfo PrivateKeyInfo, err error) {
+func ParsePrivateKeyFile(keyFile string, password []byte) (privKeyInfo PrivateKeyInfo, err error) {
 	block, isEncrypted, err := readPrivateKeyFile(keyFile)
 	if err != nil {
 		return
@@ -43,7 +43,7 @@ func ParsePrivateKeyFile(keyFile string, password []byte) (privateKeyInfo Privat
 			if len(password) > 0 {
 				break
 			}
-			fmt.Println("ERROR: password is empty")
+			fmt.Println("Error: password is empty")
 		}
 	}
 
@@ -57,7 +57,7 @@ func ParsePrivateKeyFile(keyFile string, password []byte) (privateKeyInfo Privat
 				return
 			}
 		}
-		privateKeyInfo, err = parsePKCS1PrivateKey(der)
+		privKeyInfo, err = parsePKCS1PrivateKey(der)
 	case "EC PRIVATE KEY":
 		if isEncrypted {
 			//lint:ignore SA1019 Encrypted PEM filea are still used.
@@ -65,11 +65,11 @@ func ParsePrivateKeyFile(keyFile string, password []byte) (privateKeyInfo Privat
 				return
 			}
 		}
-		privateKeyInfo, err = parseECPrivateKey(der)
+		privKeyInfo, err = parseECPrivateKey(der)
 	case "PRIVATE KEY":
-		privateKeyInfo, err = parsePKCS8PrivateKey(der, false, nil)
+		privKeyInfo, err = parsePKCS8PrivateKey(der, false, nil)
 	case "ENCRYPTED PRIVATE KEY":
-		privateKeyInfo, err = parsePKCS8PrivateKey(der, true, password)
+		privKeyInfo, err = parsePKCS8PrivateKey(der, true, password)
 	default:
 		// If the key file is of an unknown type, readPrivateKeyFile() will fail and it will not reach here.
 		//lint:ignore ST1005 "Private Key" is a component name.
@@ -114,50 +114,50 @@ func readPrivateKeyFile(keyFile string) (block *pem.Block, isEncrypted bool, err
 	return
 }
 
-func parsePKCS1PrivateKey(der []byte) (privateKeyInfo PrivateKeyInfo, err error) {
-	var privateKey *rsa.PrivateKey
-	if privateKey, err = x509.ParsePKCS1PrivateKey(der); err != nil {
+func parsePKCS1PrivateKey(der []byte) (privKeyInfo PrivateKeyInfo, err error) {
+	var privKey *rsa.PrivateKey
+	if privKey, err = x509.ParsePKCS1PrivateKey(der); err != nil {
 		return
 	}
 
-	privateKeyInfo = PrivateKeyInfo{
+	privKeyInfo = PrivateKeyInfo{
 		PublicKeyAlgorithm: x509.RSA,
-		Key:                privateKey,
+		Key:                privKey,
 	}
 	return
 }
 
-func parseECPrivateKey(der []byte) (privateKeyInfo PrivateKeyInfo, err error) {
-	var privateKey *ecdsa.PrivateKey
-	if privateKey, err = x509.ParseECPrivateKey(der); err != nil {
+func parseECPrivateKey(der []byte) (privKeyInfo PrivateKeyInfo, err error) {
+	var privKey *ecdsa.PrivateKey
+	if privKey, err = x509.ParseECPrivateKey(der); err != nil {
 		return
 	}
 
-	privateKeyInfo = PrivateKeyInfo{
+	privKeyInfo = PrivateKeyInfo{
 		PublicKeyAlgorithm: x509.ECDSA,
-		Key:                privateKey,
+		Key:                privKey,
 	}
 	return
 }
 
-func parsePKCS8PrivateKey(der []byte, isEncrypted bool, password []byte) (privateKeyInfo PrivateKeyInfo, err error) {
+func parsePKCS8PrivateKey(der []byte, isEncrypted bool, password []byte) (privKeyInfo PrivateKeyInfo, err error) {
 	var (
-		privateKey interface{}
-		algo       x509.PublicKeyAlgorithm
+		privKey interface{}
+		algo    x509.PublicKeyAlgorithm
 	)
 
 	if isEncrypted {
-		if privateKey, err = pkcs8.ParsePKCS8PrivateKey(der, password); err != nil {
+		if privKey, err = pkcs8.ParsePKCS8PrivateKey(der, password); err != nil {
 			return
 		}
 	} else {
-		if privateKey, err = x509.ParsePKCS8PrivateKey(der); err != nil {
+		if privKey, err = x509.ParsePKCS8PrivateKey(der); err != nil {
 			return
 		}
 
 	}
 
-	switch privateKey.(type) {
+	switch privKey.(type) {
 	case *rsa.PrivateKey:
 		algo = x509.RSA
 	case *ecdsa.PrivateKey:
@@ -170,9 +170,9 @@ func parsePKCS8PrivateKey(der []byte, isEncrypted bool, password []byte) (privat
 		err = errors.New("Private Key: unknown public key algorithm")
 	}
 
-	privateKeyInfo = PrivateKeyInfo{
+	privKeyInfo = PrivateKeyInfo{
 		PublicKeyAlgorithm: algo,
-		Key:                privateKey,
+		Key:                privKey,
 	}
 	return
 }
