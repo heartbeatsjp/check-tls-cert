@@ -78,7 +78,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&enableSSLCertDir, "enable-ssl-cert-dir", false, "enable system default certificate directories or environment variable SSL_CERT_DIR")
 	rootCmd.PersistentFlags().StringVar(&dnTypeStr, "dn-type", "loose", "Distinguished Name type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl'")
 	rootCmd.PersistentFlags().CountVarP(&verbose, "verbose", "v", "verbose mode. Multiple -v options increase the verbosity. The maximum is 3.")
-	rootCmd.PersistentFlags().StringVarP(&outputFormatStr, "output-format", "F", "default", "output format. 'default' or 'json'")
+	rootCmd.PersistentFlags().StringVarP(&outputFormatStr, "output-format", "O", "default", "output format. 'default' or 'json'")
 
 	// The option `--timestamp`` is used for debugging.
 	rootCmd.PersistentFlags().StringVar(&timestamp, "timestamp", "", "timestamp. This format is '2006-01-02T15:04:05+07:00'. (default a current time)")

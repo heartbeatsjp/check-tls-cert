@@ -195,7 +195,7 @@ Flags:
 Global Flags:
       --dn-type string         Distinguished Name type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
       --enable-ssl-cert-dir    enable system default certificate directories or environment variable SSL_CERT_DIR
-  -F, --output-format string   output format. 'default' or 'json' (default "default")
+  -O, --output-format string   output format. 'default' or 'json' (default "default")
       --root-file file         root certificate file (default system root certificate file)
   -v, --verbose count          verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
 ```
@@ -225,7 +225,7 @@ Flags:
 Global Flags:
       --dn-type string         Distinguished Name type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
       --enable-ssl-cert-dir    enable system default certificate directories or environment variable SSL_CERT_DIR
-  -F, --output-format string   output format. 'default' or 'json' (default "default")
+  -O, --output-format string   output format. 'default' or 'json' (default "default")
       --root-file file         root certificate file (default system root certificate file)
   -v, --verbose count          verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
 ```
