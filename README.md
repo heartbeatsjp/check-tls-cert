@@ -182,21 +182,22 @@ Usage:
   check-tls-cert file [flags]
 
 Flags:
-      --ca-file file         trusted CA certificates file. It includes intermediate certificates and a root certificate. Used for the ssl_trusted_certificate directive in nginx and the SSLCACertificateFile directive in Apache HTTP Server.
-  -f, --cert-file file       certificates file. It includes a server certificate and intermediate certificates. (required)
-  -C, --chain-file file      certificate chain file. It includes intermediate certificates. Used for the SSLCertificateChainFile directive in old Apache HTTP Server.
-  -h, --help                 help for file
   -H, --hostname hostname    hostname for verifying certificate. (required)
   -k, --key-file file        private key file. (required)
+  -f, --cert-file file       certificates file. It includes a server certificate and intermediate certificates. (required)
+  -C, --chain-file file      certificate chain file. It includes intermediate certificates. Used for the SSLCertificateChainFile directive in old Apache HTTP Server.
+      --ca-file file         trusted CA certificates file. It includes intermediate certificates and a root certificate. Used for the ssl_trusted_certificate directive in nginx and the SSLCACertificateFile directive in Apache HTTP Server.
   -P, --password-file file   password file for the private key file if the private key file is encrypted. If it is not specified, you will be prompted to enter the password.
+  -w, --warning days         warning threshold in days before expiration date (default 28)
+  -c, --critical days        critical threshold in days before expiration date (default 14)
+  -h, --help                 help for file
 
 Global Flags:
-  -c, --critical days         critical threshold in days before expiration date (default 14)
-      --dn-type string        Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
-      --enable-ssl-cert-dir   enable system default certificate directories or environment variable SSL_CERT_DIR
-      --root-file file        root certificate file (default system root certificate file)
-  -v, --verbose count         verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
-  -w, --warning days          warning threshold in days before expiration date (default 28)
+      --dn-type string         Distinguished Name type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
+      --enable-ssl-cert-dir    enable system default certificate directories or environment variable SSL_CERT_DIR
+  -F, --output-format string   output format. 'default' or 'json' (default "default")
+      --root-file file         root certificate file (default system root certificate file)
+  -v, --verbose count          verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
 ```
 
 ### net command
@@ -208,24 +209,25 @@ Usage:
   check-tls-cert net [flags]
 
 Flags:
-  -h, --help                      help for net
   -H, --hostname hostname         hostname for verifying certificate
   -I, --ip-address address        IP address
-      --ocsp type                 OCSP checker type. 'no', 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
   -p, --port number               port number (default 443)
-      --starttls type             STARTTLS type. 'smtp', 'pop3, or 'imap'
-  -t, --timeout seconds           connection timeout in seconds (default 10)
-      --tls-min-version version   TLS minimum version. '1.0', '1.1', '1.2', or '1.3' (default "1.0")
   -4, --use-ipv4                  use IPv4
   -6, --use-ipv6                  use IPv6
+      --starttls type             STARTTLS type. 'smtp', 'pop3, or 'imap'
+      --tls-min-version version   TLS minimum version. '1.0', '1.1', '1.2', or '1.3' (default "1.0")
+      --ocsp type                 OCSP checker type. 'no', 'as-is', 'stapling', 'responder', or 'fallback'. 'responder' and 'fallback' are experimental. (default "as-is")
+  -t, --timeout seconds           connection timeout in seconds (default 10)
+  -w, --warning days              warning threshold in days before expiration date (default 28)
+  -c, --critical days             critical threshold in days before expiration date (default 14)
+  -h, --help                      help for net
 
 Global Flags:
-  -c, --critical days         critical threshold in days before expiration date (default 14)
-      --dn-type string        Distinguished Name Type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
-      --enable-ssl-cert-dir   enable system default certificate directories or environment variable SSL_CERT_DIR
-      --root-file file        root certificate file (default system root certificate file)
-  -v, --verbose count         verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
-  -w, --warning days          warning threshold in days before expiration date (default 28)
+      --dn-type string         Distinguished Name type. 'strict' (RFC 4514), 'loose' (with space), or 'openssl' (default "loose")
+      --enable-ssl-cert-dir    enable system default certificate directories or environment variable SSL_CERT_DIR
+  -F, --output-format string   output format. 'default' or 'json' (default "default")
+      --root-file file         root certificate file (default system root certificate file)
+  -v, --verbose count          verbose mode. Multiple -v options increase the verbosity. The maximum is 3.
 ```
 
 ## EXAMPLE OF EXECUTION
@@ -257,7 +259,7 @@ OK: all checks have been passed
 INFO: the certificate information is as follows
     Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test
     Validity
@@ -353,7 +355,7 @@ OK: all checks have been passed
 INFO: the certificate information is as follows
     Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test
     Validity:
@@ -417,6 +419,204 @@ OK: certificate is valid
 OK: all checks have been passed
 
 To get more detailed information, use the '-vv' option.
+```
+
+### JSON format
+
+If the `--output-format json` option is specified, you can output in JSON format.
+In this case, the exit code is 0 regardless of the status.
+
+```
+$ check-tls-cert file -H server-a.test \
+    -k test/testdata/pki/private/server-a-rsa.key \
+    -f test/testdata/pki/chain/fullchain-a-rsa.pem \
+    --output-format json -v
+{
+  "metadata": {
+    "name": "check-tls-cert",
+    "timestamp": "2022-04-18T15:40:55+09:00",
+    "command": "check-tls-cert file -H server-a.test -k test/testdata/pki/private/server-a-rsa.key -f test/testdata/pki/chain/fullchain-a-rsa.pem -v --output-format json",
+    "status": 0
+  },
+  "result": {
+    "summary": {
+      "name": "Summary",
+      "status": "OK",
+      "message": "all checks have been passed"
+    },
+    "checkers": [
+      {
+        "name": "Certificate",
+        "status": "INFO",
+        "message": "the certificate information is as follows",
+        "details": {
+          "issuer": "CN=Intermediate CA A RSA",
+          "subject": "CN=server-a.test",
+          "subjectAltName": [
+            {
+              "dns": "server-a.test"
+            },
+            {
+              "dns": "www.server-a.test"
+            },
+            {
+              "iPAddress": "192.0.2.1"
+            },
+            {
+              "email": "foo@example.test"
+            },
+            {
+              "uri": "https://server-a.test/"
+            }
+          ],
+          "validity": {
+            "notBefore": "2022-04-18 06:17:24 +0000 UTC",
+            "notAfter": "2023-04-18 06:17:24 +0000 UTC"
+          }
+        }
+      },
+      {
+        "name": "Certificate Files",
+        "status": "OK",
+        "message": "all files contain one or more certificates",
+        "details": [
+          {
+            "name": "Certificate File",
+            "file": "test/testdata/pki/chain/fullchain-a-rsa.pem",
+            "status": "OK",
+            "certificate": [
+              {
+                "commonName": "server-a.test",
+                "status": "OK",
+                "subject": "CN=server-a.test",
+                "issuer": "CN=Intermediate CA A RSA",
+                "expiration": "2023-04-18 15:17:24 +0900"
+              },
+              {
+                "commonName": "Intermediate CA A RSA",
+                "status": "OK",
+                "subject": "CN=Intermediate CA A RSA",
+                "issuer": "CN=ROOT CA G2 RSA",
+                "expiration": "2032-04-18 15:17:24 +0900"
+              }
+            ]
+          },
+          {
+            "name": "Root Certificates File (list only, unverified)",
+            "file": "test/testdata/pki/root-ca/ca-root.pem",
+            "status": "OK",
+            "certificate": [
+              {
+                "commonName": "ROOT CA G1 RSA",
+                "status": "INFO",
+                "subject": "CN=ROOT CA G1 RSA",
+                "issuer": "CN=ROOT CA G1 RSA",
+                "expiration": "2035-01-01 09:00:00 +0900"
+              },
+              {
+                "commonName": "ROOT CA G2 RSA",
+                "status": "INFO",
+                "subject": "CN=ROOT CA G2 RSA",
+                "issuer": "CN=ROOT CA G2 RSA",
+                "expiration": "2035-01-01 09:00:00 +0900"
+              },
+              {
+                "commonName": "ROOT CA G2 ECDSA",
+                "status": "INFO",
+                "subject": "CN=ROOT CA G2 ECDSA",
+                "issuer": "CN=ROOT CA G2 ECDSA",
+                "expiration": "2035-01-01 09:00:00 +0900"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Private Key/Certificate Pair",
+        "status": "OK",
+        "message": "the private key is paired with the certificate",
+        "details": {
+          "privateKey": {
+            "publicKeyAlgorithm": "RSA",
+            "type": "RSA Public-Key: (2048 bit)",
+            "modulus": "00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:\n...(omitted)",
+            "exponent": "65537 (0x10001)"
+          },
+          "certificate": {
+            "publicKeyAlgorithm": "RSA",
+            "type": "RSA Public-Key: (2048 bit)",
+            "modulus": "00:d3:a0:10:4c:a5:90:94:3d:dd:32:21:82:d2:df:\n...(omitted)",
+            "exponent": "65537 (0x10001)"
+          }
+        }
+      },
+      {
+        "name": "Hostname",
+        "status": "OK",
+        "message": "the hostname 'server-a.test' is valid for the certificate",
+        "details": {
+          "commonName": "server-a.test",
+          "subjectAltName": [
+            {
+              "dns": "server-a.test"
+            },
+            {
+              "dns": "www.server-a.test"
+            },
+            {
+              "iPAddress": "192.0.2.1"
+            },
+            {
+              "email": "foo@example.test"
+            },
+            {
+              "uri": "https://server-a.test/"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Validity",
+        "status": "OK",
+        "message": "the certificate will expire in 365 days on 2023-04-18 15:17:24 +0900",
+        "details": {
+          "notBefore": "2022-04-18 15:17:24 +0900",
+          "notAfter": "2023-04-18 15:17:24 +0900"
+        }
+      },
+      {
+        "name": "Certificate Chains",
+        "status": "OK",
+        "message": "the certificate chain is valid",
+        "details": [
+          [
+            {
+              "commonName": "ROOT CA G2 RSA",
+              "status": "OK",
+              "subject": "CN=ROOT CA G2 RSA",
+              "issuer": "CN=ROOT CA G2 RSA",
+              "expiration": "2035-01-01 09:00:00 +0900"
+            },
+            {
+              "commonName": "Intermediate CA A RSA",
+              "status": "OK",
+              "subject": "CN=Intermediate CA A RSA",
+              "issuer": "CN=ROOT CA G2 RSA",
+              "expiration": "2032-04-18 15:17:24 +0900"
+            },
+            {
+              "commonName": "server-a.test",
+              "status": "OK",
+              "subject": "CN=server-a.test",
+              "issuer": "CN=Intermediate CA A RSA",
+              "expiration": "2023-04-18 15:17:24 +0900"
+            }
+          ]
+        ]
+      }
+    ]
+  }
+}
 ```
 
 ### Shell completions

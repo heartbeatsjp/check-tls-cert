@@ -24,14 +24,7 @@ import (
 
 const ocspClientTimeout = 5
 
-const NoResponseStatus = -1
-
-// OCSPResponseInfo describes an information of OCSP response.
-type OCSPResponseInfo struct {
-	Server         string
-	Response       *ocsp.Response
-	ResponseStatus ocsp.ResponseStatus
-}
+const NoResponseStatus = ocsp.ResponseStatus(-1)
 
 // CertificateStatus is an OCSP certificate status.
 type CertificateStatus int
@@ -236,9 +229,13 @@ func GetOCSPResponse(cert *x509.Certificate, issuer *x509.Certificate) (string, 
 }
 
 // VerifyAuthorizedResponder verifies the certificate of the authorized responder.
-func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermediateCerts []*x509.Certificate, rootCertPool *x509.CertPool) error {
+func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermediateCerts []*x509.Certificate, rootCertPool *x509.CertPool, currentTime time.Time) error {
 	if responderCert == nil {
 		return nil
+	}
+
+	if currentTime.IsZero() {
+		currentTime = time.Now()
 	}
 
 	// See RFC 6969 4.2.2.2. Authorized Responders
@@ -264,6 +261,7 @@ func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermed
 	opts := x509.VerifyOptions{
 		Intermediates: x509util.GetIntermediateCertPool(intermediateCerts),
 		Roots:         rootCertPool,
+		CurrentTime:   currentTime,
 		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageAny},
 	}
 	_, err := responderCert.Verify(opts)
@@ -273,7 +271,7 @@ func VerifyAuthorizedResponder(responderCert, issuer *x509.Certificate, intermed
 	// See https://support.apple.com/en-us/HT205280
 	if err != nil && (runtime.GOOS == "darwin" || runtime.GOOS == "ios") {
 		if strings.Contains(err.Error(), "certificate is not standards compliant") {
-			err = x509util.VerifyCertificate(responderCert, intermediateCerts[0], false)
+			err = x509util.VerifyCertificate(responderCert, intermediateCerts[0], currentTime, false)
 		}
 	}
 

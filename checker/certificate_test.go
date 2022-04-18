@@ -8,27 +8,31 @@ import (
 	"crypto/x509"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckCertificate(t *testing.T) {
+func TestNewCertificateChecker(t *testing.T) {
 	var (
-		state      checker.State
+		c          checker.Checker
 		serverCert *x509.Certificate
 	)
 	assert := assert.New(t)
 	w := strings.Builder{}
 	checker.SetOutput(&w)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
 
 	// CN=server-a.test (RSA)
 	//
 	// INFO: the certificate information is as follows
 	//     Issuer : CN=Intermediate CA A RSA
 	//     Subject: CN=server-a.test
-	//     Subject Alternative Names:
+	//     Subject Alternative Name:
 	//         DNS: server-a.test
 	//         DNS: www.server-a.test
 	//     Validity:
@@ -59,18 +63,18 @@ func TestCheckCertificate(t *testing.T) {
 	//             Exponent: 65537 (0x10001)
 	//
 	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state = checker.CheckCertificate(serverCert)
+	c = checker.NewCertificateChecker(serverCert)
 
 	w.Reset()
-	state.Print()
-	assert.Equal(checker.INFO, state.Status)
+	c.PrintStatus()
+	assert.Equal(checker.INFO, c.Status())
 	assert.Contains(w.String(), `INFO: the certificate information is as follows`)
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
 	assert.Contains(w.String(), `    Subject Public Key Info:
@@ -83,7 +87,7 @@ func TestCheckCertificate(t *testing.T) {
 	// INFO: the certificate information is as follows
 	//     Issuer : CN=Intermediate CA A RSA
 	//     Subject: CN=server-a.test
-	//     Subject Alternative Names:
+	//     Subject Alternative Name:
 	//         DNS: server-a.test
 	//         DNS: www.server-a.test
 	//     Validity:
@@ -100,18 +104,18 @@ func TestCheckCertificate(t *testing.T) {
 	//                  14:e2:48:64:d6
 	//             NIST CURVE: P-256
 	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ecdsa.crt")
-	state = checker.CheckCertificate(serverCert)
+	c = checker.NewCertificateChecker(serverCert)
 
 	w.Reset()
-	state.Print()
-	assert.Equal(checker.INFO, state.Status)
+	c.PrintStatus()
+	assert.Equal(checker.INFO, c.Status())
 	assert.Contains(w.String(), `INFO: the certificate information is as follows`)
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
 	assert.Contains(w.String(), `    Subject Public Key Info:
@@ -124,7 +128,7 @@ func TestCheckCertificate(t *testing.T) {
 	// INFO: the certificate information is as follows
 	//     Issuer : CN=Intermediate CA A RSA
 	//     Subject: CN=server-a.test
-	//     Subject Alternative Names:
+	//     Subject Alternative Name:
 	//         DNS: server-a.test
 	//         DNS: www.server-a.test
 	//     Validity:
@@ -138,18 +142,18 @@ func TestCheckCertificate(t *testing.T) {
 	//                  5e:1d:23:ab:a7:aa:a1:71:c1:cf:fd:26:6a:c8:ba:
 	//                  67:16
 	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ed25519.crt")
-	state = checker.CheckCertificate(serverCert)
+	c = checker.NewCertificateChecker(serverCert)
 
 	w.Reset()
-	state.Print()
-	assert.Equal(checker.INFO, state.Status)
+	c.PrintStatus()
+	assert.Equal(checker.INFO, c.Status())
 	assert.Contains(w.String(), `INFO: the certificate information is as follows`)
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    Issuer : CN=Intermediate CA A RSA
     Subject: CN=server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
 	assert.Contains(w.String(), `    Subject Public Key Info:
@@ -157,4 +161,40 @@ func TestCheckCertificate(t *testing.T) {
             ED25519 Public-Key:
             pub:`)
 
+}
+
+func TestCertificateChecker(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
+
+	serverCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	c := checker.NewCertificateChecker(serverCert)
+	assert.Equal("Certificate", c.Name())
+	assert.Equal(checker.INFO, c.Status())
+	assert.Equal("the certificate information is as follows", c.Message())
+	assert.Equal("CN=server-a.test", c.Details().(*checker.CertificateDetails).Subject)
+
+	c.PrintName()
+	assert.Equal("[Certificate]\n", w.String())
+
+	w.Reset()
+	c.PrintStatus()
+	assert.Equal(checker.INFO, c.Status())
+	assert.Equal("INFO: the certificate information is as follows\n", w.String())
+
+	w.Reset()
+	c.PrintDetails()
+	assert.Contains(w.String(), `    Issuer : CN=Intermediate CA A RSA
+    Subject: CN=server-a.test
+    Subject Alternative Name:
+        DNS: server-a.test
+        DNS: www.server-a.test`)
+	assert.Contains(w.String(), `    Subject Public Key Info:
+        Public Key Algorithm: RSA
+            RSA Public-Key: (2048 bit)
+            Modulus:`)
 }

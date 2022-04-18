@@ -107,9 +107,14 @@ func GetIntermediateCertPool(intermediateCerts []*x509.Certificate) *x509.CertPo
 }
 
 // BuildCertificateChains builds certificate chains.
-func BuildCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPool) (chains [][]*x509.Certificate) {
+func BuildCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPool, currentTime time.Time) (chains [][]*x509.Certificate) {
+	if currentTime.IsZero() {
+		currentTime = time.Now()
+	}
+
 	opts := x509.VerifyOptions{
-		Roots: rootCertPool,
+		Roots:       rootCertPool,
+		CurrentTime: currentTime,
 	}
 
 	// If a valid root certificate is found, build a chain with it.
@@ -146,8 +151,10 @@ func BuildCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPo
 }
 
 // VerifyValidity verifies the validity of the certificate.
-func VerifyValidity(cert *x509.Certificate, days int) (message string, err error) {
-	currentTime := time.Now()
+func VerifyValidity(cert *x509.Certificate, days int, currentTime time.Time) (message string, err error) {
+	if currentTime.IsZero() {
+		currentTime = time.Now()
+	}
 	expirationDays := int(math.Ceil(cert.NotAfter.Sub(currentTime).Hours() / 24))
 
 	switch {
@@ -164,8 +171,12 @@ func VerifyValidity(cert *x509.Certificate, days int) (message string, err error
 }
 
 // VerifyCertificate verifies a certificate using the parent certificate.
-func VerifyCertificate(cert *x509.Certificate, parent *x509.Certificate, forceParentToCheck bool) error {
+func VerifyCertificate(cert *x509.Certificate, parent *x509.Certificate, currentTime time.Time, forceParentToCheck bool) error {
 	var messages []string
+
+	if currentTime.IsZero() {
+		currentTime = time.Now()
+	}
 
 	if len(cert.Raw) == 0 {
 		messages = append(messages, "certificate parse error")
@@ -213,7 +224,7 @@ func VerifyCertificate(cert *x509.Certificate, parent *x509.Certificate, forcePa
 		}
 	}
 
-	if _, err := VerifyValidity(cert, 0); err != nil {
+	if _, err := VerifyValidity(cert, 0, currentTime); err != nil {
 		messages = append(messages, err.Error())
 	}
 

@@ -6,88 +6,212 @@ package checker
 
 import (
 	"crypto/x509"
+	"strings"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
-// CertificateInfo describes a status of a certificate.
 type CertificateInfo struct {
-	CommonName  string
-	Certificate *x509.Certificate
-	Status      Status
-	Message     string
+	CommonName   string `json:"commonName"`
+	Status       Status `json:"-"`
+	StatusString string `json:"status"`
+	Subject      string `json:"subject"`
+	Issuer       string `json:"issuer"`
+	Expiration   string `json:"expiration"`
+	Message      string `json:"message,omitempty"`
+	Error        string `json:"error,omitempty"`
 }
 
-func getCertificateInfo(cert *x509.Certificate, parent *x509.Certificate, forceParentToCheck bool) CertificateInfo {
+func NewCertificateInfo(cert *x509.Certificate, parent *x509.Certificate, forceParentToCheck bool) CertificateInfo {
 	status := OK
-	var message string
+	var msg, errmsg string
 
-	err := x509util.VerifyCertificate(cert, parent, forceParentToCheck)
+	err := x509util.VerifyCertificate(cert, parent, currentTime, forceParentToCheck)
 	if err != nil {
 		status = ERROR
-		message = err.Error()
+		errmsg = err.Error()
 	}
 
-	certInfo := CertificateInfo{
-		CommonName:  cert.Subject.CommonName,
-		Certificate: cert,
-		Status:      status,
-		Message:     message,
+	return CertificateInfo{
+		CommonName:   cert.Subject.CommonName,
+		Status:       status,
+		StatusString: status.String(),
+		Subject:      x509util.DistinguishedName(cert.Subject, dnType),
+		Issuer:       x509util.DistinguishedName(cert.Issuer, dnType),
+		Expiration:   cert.NotAfter.Local().Format(timeFormat),
+		Message:      msg,
+		Error:        errmsg,
 	}
-	return certInfo
 }
 
-func printCertificate(cert *x509.Certificate, verbose int, dnType x509util.DNType, indent int) {
-	printDetailsLine(indent, "Issuer : %s", x509util.DistinguishedName(cert.Issuer, dnType))
-	printDetailsLine(indent, "Subject: %s", x509util.DistinguishedName(cert.Subject, dnType))
-	if len(cert.DNSNames) > 0 {
-		printDetailsLine(indent, "Subject Alternative Names:")
-		for _, dnsName := range cert.DNSNames {
-			printDetailsLine(indent, "    DNS: %s", dnsName)
-		}
-	}
-	printDetailsLine(indent, "Validity:")
-	printDetailsLine(indent, "    Not Before: %s", cert.NotBefore)
-	printDetailsLine(indent, "    Not After : %s", cert.NotAfter)
+type CertificateDetails struct {
+	Issuer               string           `json:"issuer"`
+	Subject              string           `json:"subject"`
+	SubjectAltName       []subjectAltName `json:"subjectAltName,omitempty"`
+	Validity             validity         `json:"validity"`
+	SubjectPublicKeyInfo *publicKeyInfo   `json:"subjectPublicKeyInfo,omitempty"`
+}
+
+type subjectAltName struct {
+	DNS       string `json:"dns,omitempty"`
+	IPAddress string `json:"iPAddress,omitempty"`
+	Email     string `json:"email,omitempty"`
+	URI       string `json:"uri,omitempty"`
+}
+
+type validity struct {
+	NotBefore string `json:"notBefore"`
+	NotAfter  string `json:"notAfter"`
+}
+
+type publicKeyInfo struct {
+	Name               string   `json:"-"`
+	PublicKeyAlgorithm string   `json:"publicKeyAlgorithm,omitempty"`
+	Type               string   `json:"type,omitempty"`
+	KeyStringLines     []string `json:"-"`
+	Modulus            string   `json:"modulus,omitempty"`
+	Exponent           string   `json:"exponent,omitempty"`
+	Pub                string   `json:"pub,omitempty"`
+	NISTCurve          string   `json:"nISTCurve,omitempty"`
+}
+
+func NewCertificateDetails(cert *x509.Certificate) *CertificateDetails {
+	var sans []subjectAltName
+	var subjPubKeyInfo *publicKeyInfo
+
+	sans = getSubjectAltNames(cert)
 
 	if verbose > 1 {
-		publicKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(cert)
-		publicKeyInfo.SourceName = "Subject Public Key Info"
-		// Decrease verbosity.
-		printPublicKey(publicKeyInfo, verbose-1, indent)
+		var omit bool
+		if verbose == 2 {
+			omit = true
+		}
+		pubKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(cert)
+		subjPubKeyInfo = getPublicKeyInfo(pubKeyInfo, omit)
+	}
+
+	return &CertificateDetails{
+		Issuer:         x509util.DistinguishedName(cert.Issuer, dnType),
+		Subject:        x509util.DistinguishedName(cert.Subject, dnType),
+		SubjectAltName: sans,
+		Validity: validity{
+			NotBefore: cert.NotBefore.String(),
+			NotAfter:  cert.NotAfter.String(),
+		},
+		SubjectPublicKeyInfo: subjPubKeyInfo,
 	}
 }
 
-func printPublicKey(publicKeyInfo x509util.PublicKeyInfo, verbose int, indent int) {
-	printDetailsLine(indent, "%s:", publicKeyInfo.SourceName)
-	printDetailsLine(indent, "    Public Key Algorithm: %s", publicKeyInfo.PublicKeyAlgorithm.String())
+func getSubjectAltNames(cert *x509.Certificate) []subjectAltName {
+	var sans []subjectAltName
 
-	printDetailsLine(indent, "        %s", publicKeyInfo.TypeLabel)
-
-	publicKeyTypeName := "pub"
-	if publicKeyInfo.PublicKeyAlgorithm == x509.RSA {
-		publicKeyTypeName = "Modulus"
+	for _, dNSName := range cert.DNSNames {
+		sans = append(sans, subjectAltName{DNS: dNSName})
 	}
-	printDetailsLine(indent, "        %s:", publicKeyTypeName)
+	for _, iPAddress := range cert.IPAddresses {
+		sans = append(sans, subjectAltName{IPAddress: iPAddress.String()})
+	}
+	for _, rfc822Name := range cert.EmailAddresses {
+		sans = append(sans, subjectAltName{Email: rfc822Name})
+	}
+	for _, uri := range cert.URIs {
+		sans = append(sans, subjectAltName{URI: uri.String()})
+	}
+	return sans
+}
 
-	if verbose < 2 {
-		printDetailsLine(indent, "            %s", publicKeyInfo.KeyString[:45])
-		printDetailsLine(indent, "            ...(omitted)")
-	} else if verbose >= 2 {
-		const length = 45
+func getPublicKeyInfo(pubKeyInfo x509util.PublicKeyInfo, omit bool) *publicKeyInfo {
+	var (
+		modulus   string
+		exponent  string
+		pub       string
+		nISTCurve string
+	)
+
+	keyStringLines := createPublicKeyStringLines(pubKeyInfo.KeyString, omit)
+	keyString := strings.Join(keyStringLines, "\n")
+
+	switch pubKeyInfo.PublicKeyAlgorithm {
+	case x509.RSA:
+		modulus = keyString
+		exponent = pubKeyInfo.Option["Exponent"]
+	case x509.ECDSA:
+		pub = keyString
+		nISTCurve = pubKeyInfo.Option["NIST CURVE"]
+	case x509.Ed25519:
+		pub = keyString
+	}
+
+	return &publicKeyInfo{
+		Name:               pubKeyInfo.SourceName,
+		PublicKeyAlgorithm: pubKeyInfo.PublicKeyAlgorithm.String(),
+		Type:               pubKeyInfo.Type,
+		KeyStringLines:     keyStringLines,
+		Modulus:            modulus,
+		Exponent:           exponent,
+		Pub:                pub,
+		NISTCurve:          nISTCurve,
+	}
+}
+
+func createPublicKeyStringLines(keyString string, omit bool) []string {
+	const lineLength = 45
+	var lines []string
+	if omit {
+		lines = append(lines, keyString[:lineLength])
+		lines = append(lines, "...(omitted)")
+	} else {
 		var line string
-		for i := 0; i < len(publicKeyInfo.KeyString); i = i + length {
-			if i+length < len(publicKeyInfo.KeyString) {
-				line = publicKeyInfo.KeyString[i : i+length]
-
+		for i := 0; i < len(keyString); i = i + lineLength {
+			if i+lineLength < len(keyString) {
+				line = keyString[i : i+lineLength]
 			} else {
-				line = publicKeyInfo.KeyString[i:]
+				line = keyString[i:]
 			}
-			printDetailsLine(indent, "            %s", line)
+			lines = append(lines, line)
 		}
 	}
+	return lines
+}
 
-	for key, value := range publicKeyInfo.Option {
-		printDetailsLine(indent, "        %s: %s", key, value)
+func printCertificate(indent int, details *CertificateDetails) {
+	printKeyValueIfExists(indent, "Issuer ", details.Issuer)
+	printKeyValueIfExists(indent, "Subject", details.Subject)
+	printSubjectAltName(indent, details.SubjectAltName)
+	printKey(indent, "Validity")
+	printKeyValueIfExists(indent+4, "Not Before", details.Validity.NotBefore)
+	printKeyValueIfExists(indent+4, "Not After ", details.Validity.NotAfter)
+
+	if verbose > 1 {
+		printKey(indent, "Subject Public Key Info")
+		printPublicKey(indent, details.SubjectPublicKeyInfo)
 	}
+}
+
+func printSubjectAltName(indent int, sans []subjectAltName) {
+	if len(sans) == 0 {
+		return
+	}
+
+	printKey(indent, "Subject Alternative Name")
+	for _, item := range sans {
+		printKeyValueIfExists(indent+4, "DNS", item.DNS)
+		printKeyValueIfExists(indent+4, "IP Address", item.IPAddress)
+		printKeyValueIfExists(indent+4, "email", item.Email)
+		printKeyValueIfExists(indent+4, "URI", item.URI)
+	}
+}
+
+func printPublicKey(indent int, pubKeyInfo *publicKeyInfo) {
+	printKeyValueIfExists(indent+4, "Public Key Algorithm", pubKeyInfo.PublicKeyAlgorithm)
+	printIndentedLine(indent+8, pubKeyInfo.Type)
+	printKeyIfExists(indent+8, "Modulus", pubKeyInfo.Modulus)
+	printKeyIfExists(indent+8, "pub", pubKeyInfo.Pub)
+
+	for _, line := range pubKeyInfo.KeyStringLines {
+		printIndentedLine(indent+12, line)
+	}
+
+	printKeyValueIfExists(indent+8, "Exponent", pubKeyInfo.Exponent)
+	printKeyValueIfExists(indent+8, "NIST Curve", pubKeyInfo.NISTCurve)
 }

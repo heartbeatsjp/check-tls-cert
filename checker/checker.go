@@ -5,51 +5,64 @@
 package checker
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"github.com/ttkzw/go-color"
 )
 
-// output is an io.Writer. It's os.Stdout by default.
-var output io.Writer
+// verbose is a verbose mode.
+var verbose int
 
-func init() {
-	output = os.Stdout
+// SetVerbose sets a verbose mode.
+func SetVerbose(v int) {
+	verbose = v
 }
 
-// SetOutput sets the output.
-func SetOutput(w io.Writer) {
-	output = w
+// GetVerbose gets a verbose mode.
+func GetVerbose() int {
+	return verbose
 }
 
-// GetOutput gets the output.
-func GetOutput() io.Writer {
-	return output
+// dnType is a Distinguished Name type.
+var dnType x509util.DNType
+
+// SetDNType sets a Distinguished Name type.
+func SetDNType(t x509util.DNType) {
+	dnType = t
 }
 
-// Print formats using the default formats for its operands and writes to the specified output.
-// Spaces are added between operands when neither is a string.
-// It returns the number of bytes written and any write error encountered.
-func Print(a ...interface{}) (n int, err error) {
-	return fmt.Fprint(output, a...)
+// GetDNType gets a Distinguished Name type.
+func GetDNType() x509util.DNType {
+	return dnType
 }
 
-// Printf formats according to a format specifier and writes to the specified output.
-// It returns the number of bytes written and any write error encountered.
-func Printf(format string, a ...interface{}) (n int, err error) {
-	return fmt.Fprintf(output, format, a...)
+// currentTime is a current time.
+var currentTime time.Time
+
+// SetCurrentTime sets a current time.
+func SetCurrentTime(t time.Time) {
+	currentTime = t
 }
 
-// Println formats using the default formats for its operands and writes to the specified output.
-// Spaces are always added between operands and a newline is appended.
-// It returns the number of bytes written and any write error encountered.
-func Println(a ...interface{}) (n int, err error) {
-	return fmt.Fprintln(output, a...)
+// GetCurrentTime gets a current time.
+func GetCurrentTime() time.Time {
+	return currentTime
+}
+
+type Checker interface {
+	Name() string
+	Status() Status
+	Message() string
+	Details() interface{}
+	PrintName()
+	PrintStatus()
+	PrintDetails()
 }
 
 // Status is a status code for monitoring.
@@ -114,58 +127,55 @@ func (s Status) ColorString() string {
 	return strconv.Itoa(i)
 }
 
-// State describes a state information.
-type State struct {
-	Name         string
-	Status       Status
-	Message      string
-	Data         interface{} // Used for testing purposes.
-	PrintDetails func(int, x509util.DNType)
+// OutputFormat is a output format.
+type OutputFormat int
+
+const (
+	// Default output format
+	DefaultFormat = OutputFormat(iota)
+
+	// JSON output format
+	JSONFormat
+)
+
+func printCheckerName(c Checker) {
+	Println(color.Orange.Colorize(fmt.Sprintf("[%s]", c.Name())))
 }
 
-// Code returns a status code.
-func (s State) Code() int {
-	return s.Status.Code()
+func printCheckerStatus(c Checker) {
+	Printf("%s: %s\n", c.Status().ColorString(), c.Message())
 }
 
-// String returns a state string.
-func (s State) String() string {
-	return fmt.Sprintf("%s: %s", s.Status.String(), s.Message)
+type Result struct {
+	summary  *Summary
+	checkers []Checker
 }
 
-// Print prints a status message.
-func (s State) Print() {
-	Printf("%s: %s\n", s.Status.ColorString(), s.Message)
+func NewResult(summary *Summary, list []Checker) *Result {
+	return &Result{
+		summary:  summary,
+		checkers: list,
+	}
 }
 
-// PrintName prints a checker name.
-func (s State) PrintName() {
-	Println(color.Orange.Colorize(fmt.Sprintf("[%s]", s.Name)))
-}
-
-// StateList is the list of results.
-type StateList []State
-
-// Print prints results.
-func (list *StateList) Print(verbose int, dnType x509util.DNType) {
-	summaryState := list.Summarize()
-	Printf("%s: %s\n", summaryState.Status.String(), summaryState.Message)
+func (r *Result) Print() {
+	Printf("%s: %s\n", r.summary.Status().String(), r.summary.Message())
 	if verbose == 0 {
 		return
 	}
 	Println()
 
-	for _, state := range *list {
-		state.PrintName()
-		state.Print()
+	for _, c := range r.checkers {
+		c.PrintName()
+		c.PrintStatus()
 		if verbose > 0 {
-			state.PrintDetails(verbose, dnType)
+			c.PrintDetails()
 		}
 		Println("")
 	}
 
-	summaryState.PrintName()
-	summaryState.Print()
+	r.summary.PrintName()
+	r.summary.PrintStatus()
 
 	Println()
 	switch verbose {
@@ -176,52 +186,62 @@ func (list *StateList) Print(verbose int, dnType x509util.DNType) {
 	}
 }
 
-// Code returns a status code.
-func (list *StateList) Code() int {
-	state := list.Summarize()
-	return state.Code()
+type JSONableResult struct {
+	Metadata jsonableMetadata `json:"metadata"`
+	Result   jsonableResult   `json:"result,omitempty"`
 }
 
-// Summarize summarize the list of State.
-func (list *StateList) Summarize() State {
-	var messages []string
+type jsonableMetadata struct {
+	Name      string `json:"name"`
+	Timestamp string `json:"timestamp"`
+	Command   string `json:"command"`
+	Status    int    `json:"status"`
+}
 
-	summaryState := State{
-		Name:   "Summary",
-		Status: OK,
-	}
+type jsonableResult struct {
+	Summary  *jsonableChecker   `json:"summary"`
+	Checkers []*jsonableChecker `json:"checkers,omitempty"`
+}
 
-	for _, state := range *list {
-		switch state.Status {
-		case CRITICAL:
-			if summaryState.Status != CRITICAL && summaryState.Status != UNKNOWN {
-				summaryState.Status = state.Status
+type jsonableChecker struct {
+	Name    string      `json:"name"`
+	Status  string      `json:"status"`
+	Message string      `json:"message,omitempty"`
+	Details interface{} `json:"details,omitempty"`
+}
+
+func (r *Result) PrintJSON() {
+	var summary *jsonableChecker
+	var checkers []*jsonableChecker
+	if verbose > 0 {
+		for _, c := range r.checkers {
+			jc := &jsonableChecker{
+				Name:    c.Name(),
+				Status:  c.Status().String(),
+				Message: c.Message(),
+				Details: c.Details(),
 			}
-			messages = append(messages, state.Message)
-		case WARNING:
-			if summaryState.Status != WARNING && summaryState.Status != CRITICAL && summaryState.Status != UNKNOWN {
-				summaryState.Status = state.Status
-			}
-			messages = append(messages, state.Message)
-		case UNKNOWN:
-			summaryState.Status = state.Status
-			messages = append(messages, state.Message)
-		default:
+			checkers = append(checkers, jc)
 		}
 	}
-
-	if summaryState.Status == OK {
-		summaryState.Message = "all checks have been passed"
-	} else {
-		summaryState.Message = strings.Join(messages, " / ")
+	summary = &jsonableChecker{
+		Name:    r.summary.Name(),
+		Status:  r.summary.Status().String(),
+		Message: r.summary.Message(),
 	}
 
-	return summaryState
-}
-
-func printDetailsLine(indent int, format string, a ...interface{}) {
-	var indentString = strings.Repeat(" ", indent)
-	Print(indentString)
-	Printf(format, a...)
-	Printf("\n")
+	jr := JSONableResult{
+		Metadata: jsonableMetadata{
+			Name:      "check-tls-cert",
+			Timestamp: time.Now().Format(time.RFC3339),
+			Command:   strings.Join(os.Args, " "),
+			Status:    r.summary.Status().Code(),
+		},
+		Result: jsonableResult{
+			Summary:  summary,
+			Checkers: checkers,
+		},
+	}
+	b, _ := json.MarshalIndent(jr, "", "  ")
+	Println(string(b))
 }

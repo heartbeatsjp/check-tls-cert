@@ -5,20 +5,25 @@
 package checker_test
 
 import (
-	"crypto/x509"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCheckHostname(t *testing.T) {
-	var state checker.State
+func TestNewHostnameChecker(t *testing.T) {
+	var (
+		c checker.Checker
+	)
+	assert := assert.New(t)
 	w := strings.Builder{}
 	checker.SetOutput(&w)
-	assert := assert.New(t)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
 
 	// Subject: CN=server-a.test
 	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
@@ -29,22 +34,21 @@ func TestCheckHostname(t *testing.T) {
 	//
 	// CRITICAL: the hostname '' is invalid for the certificate
 	//     Common Name: server-a.test
-	//     Subject Alternative Names:
+	//     Subject Alternative Name:
 	//         DNS: server-a.test
 	//         DNS: www.server-a.test
-	state = checker.CheckHostname("", cert)
+	c = checker.NewHostnameChecker("", cert)
+
 	w.Reset()
-	state.Print()
-	assert.EqualValues(checker.CRITICAL, state.Status)
-	assert.Contains(state.Message, "the hostname '' is invalid for the certificate")
+	c.PrintStatus()
+	assert.EqualValues(checker.CRITICAL, c.Status())
+	assert.Contains(c.Message(), "the hostname '' is invalid for the certificate")
 	assert.Contains(w.String(), "CRITICAL: the hostname '' is invalid for the certificate")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
-	assert.EqualValues("CN=server-a.test", state.Data.(*x509.Certificate).Subject.String())
-	assert.EqualValues([]string{"server-a.test", "www.server-a.test"}, state.Data.(*x509.Certificate).DNSNames)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    Common Name: server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
 
@@ -52,22 +56,21 @@ func TestCheckHostname(t *testing.T) {
 	//
 	// CRITICAL: the hostname 'server-b.test' is invalid for the certificate / x509: certificate is valid for server-a.test, www.server-a.test, not server-b.test
 	//     Common Name: server-a.test
-	//     Subject Alternative Names:
+	//     Subject Alternative Name:
 	//         DNS: server-a.test
 	//         DNS: www.server-a.test
-	state = checker.CheckHostname("server-b.test", cert)
+	c = checker.NewHostnameChecker("server-b.test", cert)
+
 	w.Reset()
-	state.Print()
-	assert.EqualValues(checker.CRITICAL, state.Status)
-	assert.Contains(state.Message, "the hostname 'server-b.test' is invalid for the certificate")
+	c.PrintStatus()
+	assert.EqualValues(checker.CRITICAL, c.Status())
+	assert.Contains(c.Message(), "the hostname 'server-b.test' is invalid for the certificate")
 	assert.Contains(w.String(), "CRITICAL: the hostname 'server-b.test' is invalid for the certificate")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
-	assert.EqualValues("CN=server-a.test", state.Data.(*x509.Certificate).Subject.String())
-	assert.EqualValues([]string{"server-a.test", "www.server-a.test"}, state.Data.(*x509.Certificate).DNSNames)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    Common Name: server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
 
@@ -75,23 +78,52 @@ func TestCheckHostname(t *testing.T) {
 	//
 	// OK: the hostname 'server-a.test' is valid for the certificate
 	//     Common Name: server-a.test
-	//     Subject Alternative Names:
+	//     Subject Alternative Name:
 	//         DNS: server-a.test
 	//         DNS: www.server-a.test
-	state = checker.CheckHostname("server-a.test", cert)
+	c = checker.NewHostnameChecker("server-a.test", cert)
+
 	w.Reset()
-	state.Print()
-	assert.EqualValues(checker.OK, state.Status)
-	assert.EqualValues("the hostname 'server-a.test' is valid for the certificate", state.Message)
+	c.PrintStatus()
+	assert.EqualValues(checker.OK, c.Status())
+	assert.EqualValues("the hostname 'server-a.test' is valid for the certificate", c.Message())
 	assert.Contains(w.String(), "OK: the hostname 'server-a.test' is valid for the certificate")
 
 	w.Reset()
-	state.PrintDetails(2, x509util.StrictDN)
-	assert.EqualValues("CN=server-a.test", state.Data.(*x509.Certificate).Subject.String())
-	assert.EqualValues([]string{"server-a.test", "www.server-a.test"}, state.Data.(*x509.Certificate).DNSNames)
+	c.PrintDetails()
 	assert.Contains(w.String(), `    Common Name: server-a.test
-    Subject Alternative Names:
+    Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
 
+}
+
+func TestHostnameChecker(t *testing.T) {
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
+
+	cert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	c := checker.NewHostnameChecker("server-a.test", cert)
+	assert.Equal("Hostname", c.Name())
+	assert.Equal(checker.OK, c.Status())
+	assert.Equal("the hostname 'server-a.test' is valid for the certificate", c.Message())
+	assert.Equal("server-a.test", c.Details().(*checker.HostnameDetails).CommonName)
+
+	c.PrintName()
+	assert.Equal("[Hostname]\n", w.String())
+
+	w.Reset()
+	c.PrintStatus()
+	assert.Equal("OK: the hostname 'server-a.test' is valid for the certificate\n", w.String())
+
+	w.Reset()
+	c.PrintDetails()
+	assert.Contains(w.String(), `    Common Name: server-a.test
+    Subject Alternative Name:
+        DNS: server-a.test
+        DNS: www.server-a.test`)
 }

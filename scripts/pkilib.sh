@@ -187,7 +187,7 @@ _gen_server_cert() {
     -extfile <(cat <<EOT
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer
-subjectAltName=DNS:${domainname},DNS:www.${domainname}
+subjectAltName=DNS:${domainname},DNS:www.${domainname},IP:192.0.2.1,email:foo@example.test,URI:https://${domainname}/
 keyUsage=critical,digitalSignature,keyEncipherment
 extendedKeyUsage=serverAuth,clientAuth
 basicConstraints=CA:FALSE

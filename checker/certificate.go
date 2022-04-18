@@ -6,25 +6,54 @@ package checker
 
 import (
 	"crypto/x509"
-
-	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
-// CheckCertificate prints a certificate information.
-func CheckCertificate(cert *x509.Certificate) State {
+// CertificateChecker represents a certificate information.
+type CertificateChecker struct {
+	name    string
+	status  Status
+	message string
+	details *CertificateDetails
+}
+
+func NewCertificateChecker(cert *x509.Certificate) *CertificateChecker {
 	const name = "Certificate"
+	message := "the certificate information is as follows"
 
-	printDetails := func(verbose int, dnType x509util.DNType) {
-		printCertificate(cert, verbose, dnType, 4)
+	details := NewCertificateDetails(cert)
+
+	return &CertificateChecker{
+		name:    name,
+		status:  INFO,
+		message: message,
+		details: details,
 	}
+}
 
-	state := State{
-		Name:         name,
-		Status:       INFO,
-		Message:      "the certificate information is as follows",
-		Data:         cert,
-		PrintDetails: printDetails,
-	}
+func (c *CertificateChecker) Name() string {
+	return c.name
+}
 
-	return state
+func (c *CertificateChecker) Status() Status {
+	return c.status
+}
+
+func (c *CertificateChecker) Message() string {
+	return c.message
+}
+
+func (c *CertificateChecker) Details() interface{} {
+	return c.details
+}
+
+func (c *CertificateChecker) PrintName() {
+	printCheckerName(c)
+}
+
+func (c *CertificateChecker) PrintStatus() {
+	printCheckerStatus(c)
+}
+
+func (c *CertificateChecker) PrintDetails() {
+	printCertificate(4, c.details)
 }

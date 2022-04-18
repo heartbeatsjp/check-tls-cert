@@ -11,45 +11,48 @@ import (
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
 
-// CheckCertificateChain checks wheather the certificate chain is valid.
-func CheckCertificateChain(certs []*x509.Certificate, rootCertPool *x509.CertPool) State {
+// CertificateChainChecker represents wheather certificate chains are valid.
+type CertificateChainChecker struct {
+	name    string
+	status  Status
+	message string
+	details CertificateChainDetails
+}
+
+func NewCertificateChainChecker(certs []*x509.Certificate, rootCertPool *x509.CertPool) *CertificateChainChecker {
 	const name = "Certificate Chains"
 
-	var certInfoInChains [][]CertificateInfo
-
-	printDetails := func(verbose int, dnType x509util.DNType) {
-		for _, certInfoInChain := range certInfoInChains {
-			indent := 4
-
-			for _, certInfo := range certInfoInChain {
-				printDetailsLine(indent, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
-				if certInfo.Certificate != nil {
-					printDetailsLine(indent, "    Subject   : %v", x509util.DistinguishedName(certInfo.Certificate.Subject, dnType))
-					printDetailsLine(indent, "    Issuer    : %v", x509util.DistinguishedName(certInfo.Certificate.Issuer, dnType))
-					printDetailsLine(indent, "    Expiration: %v", certInfo.Certificate.NotAfter.Local().Format(timeFormat))
-				}
-				if certInfo.Message != "" {
-					if certInfo.Status == ERROR {
-						printDetailsLine(indent, "    Error     : %v", certInfo.Message)
-					} else {
-						printDetailsLine(indent, "    Message   : %s", certInfo.Message)
-					}
-				}
-
-				indent = indent + 2
-			}
-		}
-	}
+	var (
+		certInfoChains [][]CertificateInfo
+		certChains     [][]*x509.Certificate
+		err            error
+	)
 
 	status := OK
 	message := "the certificate chain is valid"
-	chains, err := getCertificateChains(certs, rootCertPool)
+
+	serverCert := certs[0]
+	var intermediateCerts []*x509.Certificate
+	if len(certs) > 1 {
+		intermediateCerts = certs[1:]
+	}
+
+	opts := x509.VerifyOptions{
+		Intermediates: x509util.GetIntermediateCertPool(intermediateCerts),
+		Roots:         rootCertPool,
+		CurrentTime:   currentTime,
+	}
+
+	certChains, err = serverCert.Verify(opts)
 	if err != nil {
+		// When Verify() fails, the status of each certificate is unknown.
+		// So, it builds a certificate chain.
+		certChains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 		status = CRITICAL
 	}
 
-	for _, chain := range chains {
-		var certInfoInChain []CertificateInfo
+	for _, chain := range certChains {
+		var certInfoChain []CertificateInfo
 		n := len(chain)
 		if n == 0 {
 			continue
@@ -63,21 +66,21 @@ func CheckCertificateChain(certs []*x509.Certificate, rootCertPool *x509.CertPoo
 				Status:     INFO,
 				Message:    "a valid root certificate cannot be found, or the certificate chain is broken",
 			}
-			certInfoInChain = append(certInfoInChain, certInfo)
+			certInfoChain = append(certInfoChain, certInfo)
 		}
 
 		var parent *x509.Certificate
 		for i := 0; i < n; i++ {
 			cert := chain[n-i-1]
-			certInfo := getCertificateInfo(cert, parent, true)
-			certInfoInChain = append(certInfoInChain, certInfo)
+			certInfo := NewCertificateInfo(cert, parent, true)
+			certInfoChain = append(certInfoChain, certInfo)
 			parent = cert
 		}
-		certInfoInChains = append(certInfoInChains, certInfoInChain)
+		certInfoChains = append(certInfoChains, certInfoChain)
 	}
 
-	for _, certInfoInChain := range certInfoInChains {
-		for _, certInfo := range certInfoInChain {
+	for _, certInfoChain := range certInfoChains {
+		for _, certInfo := range certInfoChain {
 			if certInfo.Status == ERROR {
 				status = CRITICAL
 			}
@@ -91,33 +94,57 @@ func CheckCertificateChain(certs []*x509.Certificate, rootCertPool *x509.CertPoo
 		}
 	}
 
-	state := State{
-		Name:         name,
-		Status:       status,
-		Message:      message,
-		Data:         certInfoInChains,
-		PrintDetails: printDetails,
+	details := NewCertificateChainDetails(certInfoChains)
+
+	return &CertificateChainChecker{
+		name:    name,
+		status:  status,
+		message: message,
+		details: details,
 	}
-	return state
 }
 
-func getCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPool) (chains [][]*x509.Certificate, err error) {
-	serverCert := certs[0]
-	var intermediateCerts []*x509.Certificate
-	if len(certs) > 1 {
-		intermediateCerts = certs[1:]
-	}
+func (c *CertificateChainChecker) Name() string {
+	return c.name
+}
 
-	opts := x509.VerifyOptions{
-		Intermediates: x509util.GetIntermediateCertPool(intermediateCerts),
-		Roots:         rootCertPool,
-	}
+func (c *CertificateChainChecker) Status() Status {
+	return c.status
+}
 
-	chains, err = serverCert.Verify(opts)
-	if err != nil {
-		// When Verify() fails, the status of each certificate is unknown.
-		// So, it builds a certificate chain.
-		chains = x509util.BuildCertificateChains(certs, rootCertPool)
+func (c *CertificateChainChecker) Message() string {
+	return c.message
+}
+
+func (c *CertificateChainChecker) Details() interface{} {
+	return c.details
+}
+
+func (c *CertificateChainChecker) PrintName() {
+	printCheckerName(c)
+}
+
+func (c *CertificateChainChecker) PrintStatus() {
+	printCheckerStatus(c)
+}
+
+func (c *CertificateChainChecker) PrintDetails() {
+	for _, chain := range c.details {
+		indent := 4
+		for _, certInfo := range chain {
+			printIndentedLine(indent, "- %s: %s", certInfo.Status.ColorString(), certInfo.CommonName)
+			printKeyValueIfExists(indent+4, "Subject   ", certInfo.Subject)
+			printKeyValueIfExists(indent+4, "Issuer    ", certInfo.Issuer)
+			printKeyValueIfExists(indent+4, "Expiration", certInfo.Expiration)
+			printKeyValueIfExists(indent+4, "Message   ", certInfo.Message)
+			printKeyValueIfExists(indent+4, "Error     ", certInfo.Error)
+			indent = indent + 2
+		}
 	}
-	return chains, err
+}
+
+type CertificateChainDetails [][]CertificateInfo
+
+func NewCertificateChainDetails(c [][]CertificateInfo) CertificateChainDetails {
+	return c
 }

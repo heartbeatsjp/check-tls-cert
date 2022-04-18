@@ -7,11 +7,34 @@ package checker_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/heartbeatsjp/check-tls-cert/checker"
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestVerbose(t *testing.T) {
+	assert := assert.New(t)
+
+	checker.SetVerbose(1)
+	assert.Equal(1, checker.GetVerbose())
+}
+
+func TestDNType(t *testing.T) {
+	assert := assert.New(t)
+
+	checker.SetDNType(x509util.StrictDN)
+	assert.Equal(x509util.StrictDN, checker.GetDNType())
+}
+
+func TestCurrentTime(t *testing.T) {
+	assert := assert.New(t)
+
+	now := time.Now()
+	checker.SetCurrentTime(now)
+	assert.Equal(now, checker.GetCurrentTime())
+}
 
 func TestStatusPrint(t *testing.T) {
 	assert := assert.New(t)
@@ -58,130 +81,156 @@ func TestStatusString(t *testing.T) {
 	assert.Equal("UNKNOWN", checker.UNKNOWN.String())
 }
 
-func TestStateCode(t *testing.T) {
-	assert := assert.New(t)
-
-	okState := checker.State{Status: checker.OK, Message: "ok message"}
-	warningState := checker.State{Status: checker.WARNING, Message: "warning message"}
-	criticalState := checker.State{Status: checker.CRITICAL, Message: "critical message"}
-	unknownState := checker.State{Status: checker.UNKNOWN, Message: "unknown message"}
-
-	assert.Equal(0, okState.Code())
-	assert.Equal(1, warningState.Code())
-	assert.Equal(2, criticalState.Code())
-	assert.Equal(3, unknownState.Code())
-}
-
-func TestStateString(t *testing.T) {
-	assert := assert.New(t)
-
-	okState := checker.State{Status: checker.OK, Message: "ok message"}
-	warningState := checker.State{Status: checker.WARNING, Message: "warning message"}
-	criticalState := checker.State{Status: checker.CRITICAL, Message: "critical message"}
-	unknownState := checker.State{Status: checker.UNKNOWN, Message: "unknown message"}
-
-	assert.Equal("OK: ok message", okState.String())
-	assert.Equal("WARNING: warning message", warningState.String())
-	assert.Equal("CRITICAL: critical message", criticalState.String())
-	assert.Equal("UNKNOWN: unknown message", unknownState.String())
-}
-
-func TestStateListSummarize(t *testing.T) {
+func TestResultPrint(t *testing.T) {
 	var (
-		stateList    checker.StateList
-		summaryState checker.State
+		checkerList []checker.Checker
+		c           checker.Checker
+		summary     *checker.Summary
+		result      *checker.Result
 	)
-
-	assert := assert.New(t)
-
-	okState := checker.State{Status: checker.OK, Message: "ok message"}
-	warningState := checker.State{Status: checker.WARNING, Message: "warning message"}
-	criticalState := checker.State{Status: checker.CRITICAL, Message: "critical message"}
-	unknownState := checker.State{Status: checker.UNKNOWN, Message: "unknown message"}
-
-	stateList = checker.StateList{okState, okState, okState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.OK, summaryState.Status)
-	assert.Equal("all checks have been passed", summaryState.Message)
-
-	stateList = checker.StateList{okState, warningState, okState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.WARNING, summaryState.Status)
-	assert.Equal("warning message", summaryState.Message)
-
-	stateList = checker.StateList{okState, criticalState, okState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.CRITICAL, summaryState.Status)
-	assert.Equal("critical message", summaryState.Message)
-
-	stateList = checker.StateList{okState, unknownState, okState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.UNKNOWN, summaryState.Status)
-	assert.Equal("unknown message", summaryState.Message)
-
-	stateList = checker.StateList{okState, warningState, criticalState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.CRITICAL, summaryState.Status)
-	assert.Equal("warning message / critical message", summaryState.Message)
-
-	stateList = checker.StateList{okState, criticalState, warningState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.CRITICAL, summaryState.Status)
-	assert.Equal("critical message / warning message", summaryState.Message)
-
-	stateList = checker.StateList{okState, criticalState, warningState, unknownState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.UNKNOWN, summaryState.Status)
-	assert.Equal("critical message / warning message / unknown message", summaryState.Message)
-
-	stateList = checker.StateList{unknownState, criticalState, warningState, okState}
-	summaryState = stateList.Summarize()
-	assert.Equal(checker.UNKNOWN, summaryState.Status)
-	assert.Equal("unknown message / critical message / warning message", summaryState.Message)
-}
-
-func TestStateListCode(t *testing.T) {
-	var stateList checker.StateList
-
-	assert := assert.New(t)
-
-	okState := checker.State{Status: checker.OK, Message: "ok message"}
-	warningState := checker.State{Status: checker.WARNING, Message: "warning message"}
-	criticalState := checker.State{Status: checker.CRITICAL, Message: "critical message"}
-	unknownState := checker.State{Status: checker.UNKNOWN, Message: "unknown message"}
-
-	stateList = checker.StateList{okState, okState, okState, okState}
-	assert.Equal(0, stateList.Code())
-
-	stateList = checker.StateList{okState, warningState, okState, okState}
-	assert.Equal(1, stateList.Code())
-
-	stateList = checker.StateList{okState, criticalState, okState, okState}
-	assert.Equal(2, stateList.Code())
-
-	stateList = checker.StateList{okState, unknownState, okState, okState}
-	assert.Equal(3, stateList.Code())
-
-	stateList = checker.StateList{okState, warningState, criticalState, okState}
-	assert.Equal(2, stateList.Code())
-
-	stateList = checker.StateList{okState, criticalState, warningState, okState}
-	assert.Equal(2, stateList.Code())
-
-	stateList = checker.StateList{okState, criticalState, warningState, unknownState}
-	assert.Equal(3, stateList.Code())
-
-	stateList = checker.StateList{unknownState, criticalState, warningState, okState}
-	assert.Equal(3, stateList.Code())
-}
-
-func TestStatePrintName(t *testing.T) {
 	assert := assert.New(t)
 	w := strings.Builder{}
 	checker.SetOutput(&w)
+	checker.SetVerbose(3)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
 
-	serverCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	state := checker.CheckCertificate(serverCert)
-	state.PrintName()
-	assert.Equal(w.String(), "[Certificate]\n")
+	// This certificate will expire in 365 days.
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certs, _ := x509util.ParseCertificateFiles(certFile)
+	cert := certs[0]
+
+	// OK: the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 0, 0)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+
+	w.Reset()
+	result.Print()
+	assert.Contains(w.String(), "OK: all checks have been passed\n")
+
+	// WARNING: the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 366, 364)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+
+	w.Reset()
+	result.Print()
+	assert.Contains(w.String(), "WARNING: the certificate will expire ")
+
+	// CRITICAL: the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 368, 366)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+
+	w.Reset()
+	result.Print()
+	assert.Contains(w.String(), "CRITICAL: the certificate will expire ")
+
+	// verbose = 0
+	checker.SetVerbose(0)
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 0, 0)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+	w.Reset()
+	result.Print()
+	assert.Equal("OK: all checks have been passed\n", w.String())
+
+	// verbose = 1
+	checker.SetVerbose(1)
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 0, 0)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+	w.Reset()
+	result.Print()
+	assert.Contains(w.String(), "OK: all checks have been passed\n")
+	assert.Contains(w.String(), "[Summary]\n")
+	assert.Contains(w.String(), "To get more detailed information, use the '-vv' option.\n")
+
+	// verbose = 2
+	checker.SetVerbose(2)
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 0, 0)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+	w.Reset()
+	result.Print()
+	assert.Contains(w.String(), "OK: all checks have been passed\n")
+	assert.Contains(w.String(), "[Summary]\n")
+	assert.Contains(w.String(), "To get more detailed information, use the '-vvv' option.\n")
+
+	// verbose = 3
+	checker.SetVerbose(3)
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 0, 0)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+	w.Reset()
+	result.Print()
+	assert.Contains(w.String(), "OK: all checks have been passed\n")
+	assert.Contains(w.String(), "[Summary]\n")
+	assert.NotContains(w.String(), "To get more detailed information,")
+}
+
+func TestResultPrintJSON(t *testing.T) {
+	var (
+		checkerList []checker.Checker
+		c           checker.Checker
+		summary     *checker.Summary
+		result      *checker.Result
+	)
+	assert := assert.New(t)
+	w := strings.Builder{}
+	checker.SetOutput(&w)
+	checker.SetVerbose(2)
+	checker.SetDNType(x509util.StrictDN)
+	checker.SetCurrentTime(time.Now())
+
+	// This certificate will expire in 365 days.
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certs, _ := x509util.ParseCertificateFiles(certFile)
+	cert := certs[0]
+
+	// OK: the certificate will expire in 365 days on 2022-06-22 16:10:14 +0900
+	checkerList = []checker.Checker{}
+	c = checker.NewValidityChecker(cert, 0, 0)
+	checkerList = append(checkerList, c)
+	summary = checker.NewSummary(checkerList)
+	result = checker.NewResult(summary, checkerList)
+
+	w.Reset()
+	result.PrintJSON()
+	assert.Contains(w.String(), `{
+  "metadata": {
+    "name": "check-tls-cert",
+    "timestamp": "`)
+	assert.Contains(w.String(), `",
+    "command": "`)
+	assert.Contains(w.String(), `",
+    "status": 0`)
+	assert.Contains(w.String(), `  },
+  "result": {
+    "summary": {
+      "name": "Summary",
+      "status": "OK",
+      "message": "all checks have been passed"
+    },`)
+	assert.Contains(w.String(), `,
+    "checkers": [
+      {
+        "name": "Validity",
+        "status": "OK",
+        "message": "the certificate will expire in `)
 }
