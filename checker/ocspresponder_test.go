@@ -45,6 +45,7 @@ func TestNewOCSPResponderChecker(t *testing.T) {
 
 	// Response status: good
 	// OK: certificate is valid
+	//     OCSP Responder: ...
 	//     OCSP Response Data:
 	//         OCSP Response Status: success (0x0)
 	//         Cert Status: good
@@ -74,6 +75,7 @@ func TestNewOCSPResponderChecker(t *testing.T) {
 
 	w.Reset()
 	c.PrintDetails()
+	assert.Contains(w.String(), `    OCSP Responder:`)
 	assert.Contains(w.String(), `    OCSP Response Data:
         OCSP Response Status: successful (0x0)
         Cert Status: good
