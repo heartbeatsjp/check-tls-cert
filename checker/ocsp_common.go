@@ -149,7 +149,7 @@ func NewOCSPResponseData(responseInfo *OCSPResponseInfo) *OCSPResponseDetails {
 func printOCSPResponse(response *OCSPResponseDetails) {
 	printKeyValueIfExists(4, "OCSP Responder", response.OCSPResponder)
 
-	if response.OCSPResponseData != nil {
+	if response.OCSPResponseData != nil && response.OCSPResponseData.OCSPResponseStatus != "" {
 		printKey(4, "OCSP Response Data")
 		printKeyValueIfExists(8, "OCSP Response Status", response.OCSPResponseData.OCSPResponseStatus)
 		printKeyValueIfExists(8, "Cert Status", response.OCSPResponseData.CertStatus)

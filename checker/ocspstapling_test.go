@@ -48,6 +48,10 @@ func TestNewOCSPStaplingChecker(t *testing.T) {
 	c.PrintStatus()
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
+	w.Reset()
+	c.PrintDetails()
+	assert.Equal("", w.String())
+
 	// no response
 	c = checker.NewOCSPStaplingChecker([]byte{}, issuerCert, intermediateCerts, rootCertPool, true)
 	assert.Equal(checker.INFO, c.Status())
@@ -56,6 +60,10 @@ func TestNewOCSPStaplingChecker(t *testing.T) {
 	c.PrintStatus()
 	assert.Equal(w.String(), "INFO: no response sent\n")
 
+	w.Reset()
+	c.PrintDetails()
+	assert.Equal("", w.String())
+
 	// no response
 	c = checker.NewOCSPStaplingChecker([]byte{}, issuerCert, intermediateCerts, rootCertPool, false)
 	assert.Equal(checker.WARNING, c.Status())
@@ -63,6 +71,10 @@ func TestNewOCSPStaplingChecker(t *testing.T) {
 	w.Reset()
 	c.PrintStatus()
 	assert.Equal(w.String(), "WARNING: ocsp: no response sent\n")
+
+	w.Reset()
+	c.PrintDetails()
+	assert.Equal("", w.String())
 
 	// Response status: good
 	// OK: certificate is valid
