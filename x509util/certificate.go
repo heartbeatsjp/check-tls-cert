@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -233,4 +234,215 @@ func VerifyCertificate(cert *x509.Certificate, parent *x509.Certificate, current
 	}
 
 	return nil
+}
+
+// KeyUsage represents the set of actions that are valid for a given key. It's
+// a bitmap of the KeyUsage* constants.
+//
+// See also: x509.KeyUsage
+type KeyUsage int
+
+const (
+	// Key Usage: digitalSignature (Bit 0)
+	KeyUsageDigitalSignature KeyUsage = 1 << iota
+
+	// Key Usage: contentCommitment (Bit 1)
+	KeyUsageContentCommitment
+
+	// Key Usage: keyEncipherment (Bit 2)
+	KeyUsageKeyEncipherment
+
+	// Key Usage: dataEncipherment (Bit 3)
+	KeyUsageDataEncipherment
+
+	// Key Usage: keyAgreement (Bit 4)
+	KeyUsageKeyAgreement
+
+	// Key Usage: keyCertSign (Bit 5)
+	KeyUsageCertSign
+
+	// Key Usage: cRLSign (Bit 6)
+	KeyUsageCRLSign
+
+	// Key Usage: encipherOnly (Bit 7)
+	KeyUsageEncipherOnly
+
+	// Key Usage: decipherOnly (Bit 8)
+	KeyUsageDecipherOnly
+)
+
+func (u KeyUsage) String() string {
+	switch u {
+	case KeyUsageDigitalSignature:
+		return "digitalSignature"
+	case KeyUsageContentCommitment:
+		return "contentCommitment"
+	case KeyUsageKeyEncipherment:
+		return "keyEncipherment"
+	case KeyUsageDataEncipherment:
+		return "dataEncipherment"
+	case KeyUsageKeyAgreement:
+		return "keyAgreement"
+	case KeyUsageCertSign:
+		return "keyCertSign"
+	case KeyUsageCRLSign:
+		return "cRLSign"
+	case KeyUsageEncipherOnly:
+		return "encipherOnly"
+	case KeyUsageDecipherOnly:
+		return "decipherOnly"
+	}
+	return fmt.Sprintf("Unknown Key Usage Bit(%s)", strconv.FormatFloat(math.Floor(math.Log2(float64(u))), 'g', -1, 64))
+}
+
+func (u KeyUsage) Message() string {
+	switch u {
+	case KeyUsageDigitalSignature:
+		return "Digital Signature"
+	case KeyUsageContentCommitment:
+		return "Content Commitment"
+	case KeyUsageKeyEncipherment:
+		return "Key Encipherment"
+	case KeyUsageDataEncipherment:
+		return "Data Encipherment"
+	case KeyUsageKeyAgreement:
+		return "Key Agreement"
+	case KeyUsageCertSign:
+		return "Certificate Sign"
+	case KeyUsageCRLSign:
+		return "CRL Sign"
+	case KeyUsageEncipherOnly:
+		return "Encipher Only"
+	case KeyUsageDecipherOnly:
+		return "Decipher Only"
+	}
+	return fmt.Sprintf("Unknown Key Usage Bit(%s)", strconv.FormatFloat(math.Floor(math.Log2(float64(u))), 'g', -1, 64))
+}
+
+func (u KeyUsage) Decompose() []KeyUsage {
+	var keyUsages []KeyUsage
+	for i := KeyUsage(1); i <= KeyUsageDecipherOnly; i = i * 2 {
+		if (u & i) != 0 {
+			keyUsages = append(keyUsages, i)
+		}
+	}
+	return keyUsages
+}
+
+// ExtKeyUsage represents an extended set of actions that are valid for a given key.
+// Each of the ExtKeyUsage* constants define a unique action.
+//
+// See also: x509.ExtKeyUsage
+type ExtKeyUsage int
+
+const (
+	// Extended Key Usage: anyExtendedKeyUsage (id-ce-extKeyUsage 0)
+	ExtKeyUsageAny ExtKeyUsage = iota
+
+	// Extended Key Usage: id-kp-serverAuth (id-kp 1)
+	ExtKeyUsageServerAuth
+
+	// Extended Key Usage: id-kp-clientAuth (id-kp 2)
+	ExtKeyUsageClientAuth
+
+	// Extended Key Usage: id-kp-codeSigning (id-kp 3)
+	ExtKeyUsageCodeSigning
+
+	// Extended Key Usage: id-kp-emailProtection (id-kp 4)
+	ExtKeyUsageEmailProtection
+
+	// Extended Key Usage: id-kp-ipsecEndSystem (id-kp 5)
+	ExtKeyUsageIPSECEndSystem
+
+	// Extended Key Usage: id-kp-ipsecTunnel (id-kp 6)
+	ExtKeyUsageIPSECTunnel
+
+	// Extended Key Usage: id-kp-ipsecUser (id-kp 7)
+	ExtKeyUsageIPSECUser
+
+	// Extended Key Usage: id-kp-timeStamping (id-kp 8)
+	ExtKeyUsageTimeStamping
+
+	// Extended Key Usage: id-kp-OCSPSigning (id-kp 9)
+	ExtKeyUsageOCSPSigning
+
+	// Extended Key Usage: Microsoft Server Gated Crypto (OID 1.3.6.1.4.1.311.10.3.3)
+	ExtKeyUsageMicrosoftServerGatedCrypto
+
+	// Extended Key Usage: Netscape Server Gated Crypto (OID 2.16.840.1.113730.4.1)
+	ExtKeyUsageNetscapeServerGatedCrypto
+
+	// Extended Key Usage: SPC_COMMERCIAL_SP_KEY_PURPOSE_OBJID (OID 1.3.6.1.4.1.311.2.1.22)
+	ExtKeyUsageMicrosoftCommercialCodeSigning
+
+	// Extended Key Usage: Kernel Mode Code Signing (OID 1.3.6.1.4.1.311.61.1.1)
+	ExtKeyUsageMicrosoftKernelCodeSigning
+)
+
+func (u ExtKeyUsage) String() string {
+	switch u {
+	case ExtKeyUsageAny:
+		return "any"
+	case ExtKeyUsageServerAuth:
+		return "serverAuth"
+	case ExtKeyUsageClientAuth:
+		return "clientAuth"
+	case ExtKeyUsageCodeSigning:
+		return "codeSigning"
+	case ExtKeyUsageEmailProtection:
+		return "emailProtection"
+	case ExtKeyUsageIPSECEndSystem:
+		return "ipsecEndSystem"
+	case ExtKeyUsageIPSECTunnel:
+		return "ipsecTunnel"
+	case ExtKeyUsageIPSECUser:
+		return "ipsecUser"
+	case ExtKeyUsageTimeStamping:
+		return "timeStamping"
+	case ExtKeyUsageOCSPSigning:
+		return "OCSPSigning"
+	case ExtKeyUsageMicrosoftServerGatedCrypto:
+		return "microsoftServerGatedCrypto"
+	case ExtKeyUsageNetscapeServerGatedCrypto:
+		return "netscapeServerGatedCrypto"
+	case ExtKeyUsageMicrosoftCommercialCodeSigning:
+		return "microsoftCommercialCodeSigning"
+	case ExtKeyUsageMicrosoftKernelCodeSigning:
+		return "microsoftKernelCodeSigning"
+	}
+	return "Unknown Extended Key Usage"
+}
+
+func (u ExtKeyUsage) Message() string {
+	switch u {
+	case ExtKeyUsageAny:
+		return "Any"
+	case ExtKeyUsageServerAuth:
+		return "TLS Web Server Authentication"
+	case ExtKeyUsageClientAuth:
+		return "TLS Web Client Authentication"
+	case ExtKeyUsageCodeSigning:
+		return "Code Signing"
+	case ExtKeyUsageEmailProtection:
+		return "E-mail Protection"
+	case ExtKeyUsageIPSECEndSystem:
+		return "IPSec End System"
+	case ExtKeyUsageIPSECTunnel:
+		return "IPSec Tunnel"
+	case ExtKeyUsageIPSECUser:
+		return "IPSec User"
+	case ExtKeyUsageTimeStamping:
+		return "Time Stamping"
+	case ExtKeyUsageOCSPSigning:
+		return "OCSP Signing"
+	case ExtKeyUsageMicrosoftServerGatedCrypto:
+		return "Microsoft Server Gated Crypto"
+	case ExtKeyUsageNetscapeServerGatedCrypto:
+		return "Netscape Server Gated Crypto"
+	case ExtKeyUsageMicrosoftCommercialCodeSigning:
+		return "Microsoft Commercial Code Signing"
+	case ExtKeyUsageMicrosoftKernelCodeSigning:
+		return "Microsoft Kernel Mode Code Signing"
+	}
+	return "Unknown Extended Key Usage"
 }

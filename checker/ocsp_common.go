@@ -124,15 +124,15 @@ func NewOCSPResponseData(responseInfo *OCSPResponseInfo) *OCSPResponseDetails {
 
 	if responseInfo.Response != nil {
 		oCSPResponseData.CertStatus = ocsputil.CertificateStatus(responseInfo.Response.Status).String()
-		oCSPResponseData.ProducedAt = responseInfo.Response.ProducedAt.String()
+		oCSPResponseData.ProducedAt = responseInfo.Response.ProducedAt.Format(timeFormat)
 
 		if responseInfo.Response.Status == ocsp.Revoked {
-			oCSPResponseData.RevocationTime = responseInfo.Response.RevokedAt.String()
+			oCSPResponseData.RevocationTime = responseInfo.Response.RevokedAt.Format(timeFormat)
 			oCSPResponseData.RevocationReason = fmt.Sprintf("%s (0x%x)", ocsputil.CRLReasonCode(responseInfo.Response.RevocationReason).String(), responseInfo.Response.RevocationReason)
 		}
-		oCSPResponseData.ThisUpdate = responseInfo.Response.ThisUpdate.String()
+		oCSPResponseData.ThisUpdate = responseInfo.Response.ThisUpdate.Format(timeFormat)
 		if !responseInfo.Response.NextUpdate.IsZero() {
-			oCSPResponseData.NextUpdate = responseInfo.Response.NextUpdate.String()
+			oCSPResponseData.NextUpdate = responseInfo.Response.NextUpdate.Format(timeFormat)
 		}
 
 		if responseInfo.Response.Certificate != nil {

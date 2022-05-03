@@ -64,7 +64,7 @@ func ExtractPublicKeyFromPrivateKey(privKeyInfo PrivateKeyInfo) (pubKeyInfo Publ
 }
 
 func createRSAPublicKeyInfo(sourceName string, pubKey *rsa.PublicKey) PublicKeyInfo {
-	keyString := Encode2DigitHex(pubKey.N.Bytes())
+	keyString := EncodeLowerCase2DigitHex(pubKey.N.Bytes())
 	// Add a leading 00 if the top bit is set as openssl's print_labeled_bignum().
 	if keyString[0] >= '8' {
 		keyString = "00:" + keyString
@@ -81,8 +81,8 @@ func createRSAPublicKeyInfo(sourceName string, pubKey *rsa.PublicKey) PublicKeyI
 
 func createECDSAPublicKeyInfo(sourceName string, pubKey *ecdsa.PublicKey) PublicKeyInfo {
 	prefix := "04:" // Supports only the uncompressed form. See also RFC 5480.
-	keyString := prefix + Encode2DigitHex(pubKey.X.Bytes()) +
-		":" + Encode2DigitHex(pubKey.Y.Bytes())
+	keyString := prefix + EncodeLowerCase2DigitHex(pubKey.X.Bytes()) +
+		":" + EncodeLowerCase2DigitHex(pubKey.Y.Bytes())
 	return PublicKeyInfo{
 		SourceName:         sourceName,
 		Type:               fmt.Sprintf("Public-Key: (%d bit)", pubKey.Curve.Params().BitSize),
@@ -99,15 +99,24 @@ func createEd25519PublicKeyInfo(sourceName string, pubKey ed25519.PublicKey) Pub
 		Type:               "ED25519 Public-Key:",
 		PublicKeyAlgorithm: x509.Ed25519,
 		Key:                pubKey,
-		KeyString:          Encode2DigitHex(pubKey),
+		KeyString:          EncodeLowerCase2DigitHex(pubKey),
 	}
 }
 
-// Encode2DigitHex encodes bytes into two-digit hexadecimal strings separated by a colon.
-func Encode2DigitHex(bytes []byte) string {
+// EncodeLowerCase2DigitHex encodes bytes into lower-case two-digit hexadecimal strings separated by a colon.
+func EncodeLowerCase2DigitHex(bytes []byte) string {
 	var hexElements []string
 	for _, b := range bytes {
 		hexElements = append(hexElements, fmt.Sprintf("%02x", uint8(b)))
+	}
+	return strings.Join(hexElements, ":")
+}
+
+// EncodeUpperCase2DigitHex encodes bytes into upper-case two-digit hexadecimal strings separated by a colon.
+func EncodeUpperCase2DigitHex(bytes []byte) string {
+	var hexElements []string
+	for _, b := range bytes {
+		hexElements = append(hexElements, fmt.Sprintf("%02X", uint8(b)))
 	}
 	return strings.Join(hexElements, ":")
 }

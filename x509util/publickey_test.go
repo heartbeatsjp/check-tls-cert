@@ -57,15 +57,28 @@ func TestExtractPublicKey(t *testing.T) {
 	assert.EqualValues(pubKeyInfo, pubKeyInfoInPrivKey)
 }
 
-func TestEncode2DigitHex(t *testing.T) {
+func TestEncodeLowerCase2DigitHex(t *testing.T) {
 	assert := assert.New(t)
 
-	h := x509util.Encode2DigitHex([]byte("\x01"))
+	h := x509util.EncodeLowerCase2DigitHex([]byte("\x01"))
 	assert.Equal("01", h, "2 digit hex string should match")
 
-	h = x509util.Encode2DigitHex([]byte("\x01\x02"))
+	h = x509util.EncodeLowerCase2DigitHex([]byte("\x01\x02"))
 	assert.Equal("01:02", h, "2 digit hex string should match")
 
-	h = x509util.Encode2DigitHex([]byte("\x01\x02\xff"))
+	h = x509util.EncodeLowerCase2DigitHex([]byte("\x01\x02\xff"))
 	assert.Equal("01:02:ff", h, "2 digit hex string should match")
+}
+
+func TestEncodeUpperCase2DigitHex(t *testing.T) {
+	assert := assert.New(t)
+
+	h := x509util.EncodeUpperCase2DigitHex([]byte("\x01"))
+	assert.Equal("01", h, "2 digit hex string should match")
+
+	h = x509util.EncodeUpperCase2DigitHex([]byte("\x01\x02"))
+	assert.Equal("01:02", h, "2 digit hex string should match")
+
+	h = x509util.EncodeUpperCase2DigitHex([]byte("\x01\x02\xff"))
+	assert.Equal("01:02:FF", h, "2 digit hex string should match")
 }
