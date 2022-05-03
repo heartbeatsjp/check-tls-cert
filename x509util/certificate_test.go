@@ -478,3 +478,91 @@ func TestVerifyCertificate(t *testing.T) {
 	assert.ErrorContains(err, "x509: issuer name does not match subject from issuing certificate / crypto/rsa: verification error / parent certificate may not be correct issuer")
 
 }
+
+func TestKeyUsageString(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.Equal("digitalSignature", x509util.KeyUsage(1).String())
+	assert.Equal("contentCommitment", x509util.KeyUsage(1<<1).String())
+	assert.Equal("keyEncipherment", x509util.KeyUsage(1<<2).String())
+	assert.Equal("dataEncipherment", x509util.KeyUsage(1<<3).String())
+	assert.Equal("keyAgreement", x509util.KeyUsage(1<<4).String())
+	assert.Equal("keyCertSign", x509util.KeyUsage(1<<5).String())
+	assert.Equal("cRLSign", x509util.KeyUsage(1<<6).String())
+	assert.Equal("encipherOnly", x509util.KeyUsage(1<<7).String())
+	assert.Equal("decipherOnly", x509util.KeyUsage(1<<8).String())
+	assert.Equal("Unknown Key Usage Bit(9)", x509util.KeyUsage(1<<9).String())
+}
+
+func TestKeyUsageMessage(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.Equal("Digital Signature", x509util.KeyUsage(1).Message())
+	assert.Equal("Content Commitment", x509util.KeyUsage(1<<1).Message())
+	assert.Equal("Key Encipherment", x509util.KeyUsage(1<<2).Message())
+	assert.Equal("Data Encipherment", x509util.KeyUsage(1<<3).Message())
+	assert.Equal("Key Agreement", x509util.KeyUsage(1<<4).Message())
+	assert.Equal("Certificate Sign", x509util.KeyUsage(1<<5).Message())
+	assert.Equal("CRL Sign", x509util.KeyUsage(1<<6).Message())
+	assert.Equal("Encipher Only", x509util.KeyUsage(1<<7).Message())
+	assert.Equal("Decipher Only", x509util.KeyUsage(1<<8).Message())
+	assert.Equal("Unknown Key Usage Bit(9)", x509util.KeyUsage(1<<9).Message())
+}
+
+func TestKeyUsageDecompose(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.ElementsMatch([]x509util.KeyUsage{
+		x509util.KeyUsageDigitalSignature,
+		x509util.KeyUsageContentCommitment,
+		x509util.KeyUsageKeyEncipherment,
+		x509util.KeyUsageDataEncipherment,
+		x509util.KeyUsageKeyAgreement,
+		x509util.KeyUsageCertSign,
+		x509util.KeyUsageCRLSign,
+		x509util.KeyUsageEncipherOnly,
+		x509util.KeyUsageDecipherOnly,
+	},
+		x509util.KeyUsage(1+1<<1+1<<2+1<<3+1<<4+1<<5+1<<6+1<<7+1<<8).Decompose(),
+	)
+}
+
+func TestExtKeyUsageString(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.Equal("any", x509util.ExtKeyUsage(0).String())
+	assert.Equal("serverAuth", x509util.ExtKeyUsage(1).String())
+	assert.Equal("clientAuth", x509util.ExtKeyUsage(2).String())
+	assert.Equal("codeSigning", x509util.ExtKeyUsage(3).String())
+	assert.Equal("emailProtection", x509util.ExtKeyUsage(4).String())
+	assert.Equal("ipsecEndSystem", x509util.ExtKeyUsage(5).String())
+	assert.Equal("ipsecTunnel", x509util.ExtKeyUsage(6).String())
+	assert.Equal("ipsecUser", x509util.ExtKeyUsage(7).String())
+	assert.Equal("timeStamping", x509util.ExtKeyUsage(8).String())
+	assert.Equal("OCSPSigning", x509util.ExtKeyUsage(9).String())
+	assert.Equal("microsoftServerGatedCrypto", x509util.ExtKeyUsage(10).String())
+	assert.Equal("netscapeServerGatedCrypto", x509util.ExtKeyUsage(11).String())
+	assert.Equal("microsoftCommercialCodeSigning", x509util.ExtKeyUsage(12).String())
+	assert.Equal("microsoftKernelCodeSigning", x509util.ExtKeyUsage(13).String())
+	assert.Equal("Unknown Extended Key Usage", x509util.ExtKeyUsage(14).String())
+}
+
+func TestExtKeyUsageMessage(t *testing.T) {
+	assert := assert.New(t)
+
+	assert.Equal("Any", x509util.ExtKeyUsage(0).Message())
+	assert.Equal("TLS Web Server Authentication", x509util.ExtKeyUsage(1).Message())
+	assert.Equal("TLS Web Client Authentication", x509util.ExtKeyUsage(2).Message())
+	assert.Equal("Code Signing", x509util.ExtKeyUsage(3).Message())
+	assert.Equal("E-mail Protection", x509util.ExtKeyUsage(4).Message())
+	assert.Equal("IPSec End System", x509util.ExtKeyUsage(5).Message())
+	assert.Equal("IPSec Tunnel", x509util.ExtKeyUsage(6).Message())
+	assert.Equal("IPSec User", x509util.ExtKeyUsage(7).Message())
+	assert.Equal("Time Stamping", x509util.ExtKeyUsage(8).Message())
+	assert.Equal("OCSP Signing", x509util.ExtKeyUsage(9).Message())
+	assert.Equal("Microsoft Server Gated Crypto", x509util.ExtKeyUsage(10).Message())
+	assert.Equal("Netscape Server Gated Crypto", x509util.ExtKeyUsage(11).Message())
+	assert.Equal("Microsoft Commercial Code Signing", x509util.ExtKeyUsage(12).Message())
+	assert.Equal("Microsoft Kernel Mode Code Signing", x509util.ExtKeyUsage(13).Message())
+	assert.Equal("Unknown Extended Key Usage", x509util.ExtKeyUsage(14).Message())
+}

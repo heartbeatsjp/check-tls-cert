@@ -69,19 +69,25 @@ func printKeyValueIfExists(indent int, key, value string) {
 	Print("\n")
 }
 
-// printKey writes the line like `key:`.
-func printKey(indent int, key string) {
+// printKeyValueIfExists writes the line like `key:\n    value\n...` if values exists.
+func printKeyValuesIfExists(indent int, key string, values []string) {
+	if values == nil {
+		return
+	}
 	var indentString = strings.Repeat(" ", indent)
 	Print(indentString)
 	Print(key)
 	Print(":\n")
+	for _, value := range values {
+		Print(indentString)
+		Print("    ")
+		Print(value)
+		Print("\n")
+	}
 }
 
-// printKeyIfExists writes the line like `key:` if a value exists.
-func printKeyIfExists(indent int, key, value string) {
-	if value == "" {
-		return
-	}
+// printKey writes the line like `key:`.
+func printKey(indent int, key string) {
 	var indentString = strings.Repeat(" ", indent)
 	Print(indentString)
 	Print(key)

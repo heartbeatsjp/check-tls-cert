@@ -6,10 +6,14 @@ package checker
 
 import (
 	"crypto/x509"
+	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/heartbeatsjp/check-tls-cert/x509util"
 )
+
+const publicKeyLineLength = 45
 
 type CertificateInfo struct {
 	CommonName   string `json:"commonName"`
@@ -45,11 +49,21 @@ func NewCertificateInfo(cert *x509.Certificate, parent *x509.Certificate, forceP
 }
 
 type CertificateDetails struct {
-	Issuer               string           `json:"issuer"`
-	Subject              string           `json:"subject"`
-	SubjectAltName       []subjectAltName `json:"subjectAltName,omitempty"`
-	Validity             validity         `json:"validity"`
-	SubjectPublicKeyInfo *publicKeyInfo   `json:"subjectPublicKeyInfo,omitempty"`
+	Issuer                     string                      `json:"issuer"`
+	Subject                    string                      `json:"subject"`
+	SubjectAltName             []subjectAltName            `json:"subjectAltName,omitempty"`
+	Validity                   validity                    `json:"validity"`
+	Version                    string                      `json:"version,omitempty"`
+	SerialNumber               string                      `json:"serialNumber,omitempty"`
+	SignatureAlgorithm         string                      `json:"signatureAlgorithm,omitempty"`
+	SubjectPublicKeyInfo       *publicKeyInfo              `json:"subjectPublicKeyInfo,omitempty"`
+	AuthorityKeyIdentifier     string                      `json:"authorityKeyIdentifier,omitempty"`
+	SubjectKeyIdentifier       string                      `json:"subjectKeyIdentifier,omitempty"`
+	KeyUsage                   []string                    `json:"keyUsage,omitempty"`
+	ExtKeyUsage                []string                    `json:"extendedKeyUsage,omitempty"`
+	BasicConstraints           *basicConstraints           `json:"basicConstraints,omitempty"`
+	CRLDistributionPoints      []string                    `json:"cRLDistributionPoints,omitempty"`
+	AuthorityInformationAccess *authorityInformationAccess `json:"authorityInformationAccess,omitempty"`
 }
 
 type subjectAltName struct {
@@ -65,19 +79,39 @@ type validity struct {
 }
 
 type publicKeyInfo struct {
-	Name               string   `json:"-"`
-	PublicKeyAlgorithm string   `json:"publicKeyAlgorithm,omitempty"`
-	Type               string   `json:"type,omitempty"`
-	KeyStringLines     []string `json:"-"`
-	Modulus            string   `json:"modulus,omitempty"`
-	Exponent           string   `json:"exponent,omitempty"`
-	Pub                string   `json:"pub,omitempty"`
-	NISTCurve          string   `json:"nISTCurve,omitempty"`
+	Name               string `json:"-"`
+	PublicKeyAlgorithm string `json:"publicKeyAlgorithm,omitempty"`
+	Type               string `json:"type,omitempty"`
+	Modulus            string `json:"modulus,omitempty"`
+	Exponent           string `json:"exponent,omitempty"`
+	Pub                string `json:"pub,omitempty"`
+	NISTCurve          string `json:"nISTCurve,omitempty"`
+}
+
+type authorityInformationAccess struct {
+	OCSP      []string `json:"oCSP,omitempty"`
+	CAIssuers []string `json:"cAIssuers,omitempty"`
+}
+
+type basicConstraints struct {
+	CA                bool   `json:"cA"`
+	PathLenConstraint string `json:"pathLenConstraint,omitempty"`
 }
 
 func NewCertificateDetails(cert *x509.Certificate) *CertificateDetails {
-	var sans []subjectAltName
-	var subjPubKeyInfo *publicKeyInfo
+	var (
+		sans           []subjectAltName
+		version        string
+		serialNumber   string
+		sigAlgo        string
+		subjPubKeyInfo *publicKeyInfo
+		authKeyId      string
+		subjKeyId      string
+		keyUsage       []string
+		extKeyUsage    []string
+		authInfoAccess *authorityInformationAccess
+		bc             *basicConstraints
+	)
 
 	sans = getSubjectAltNames(cert)
 
@@ -86,8 +120,38 @@ func NewCertificateDetails(cert *x509.Certificate) *CertificateDetails {
 		if verbose == 2 {
 			omit = true
 		}
+		version = fmt.Sprintf("%d", cert.Version)
+		serialNumber = x509util.EncodeUpperCase2DigitHex(cert.SerialNumber.Bytes())
+		sigAlgo = strings.Replace(cert.SignatureAlgorithm.String(), "-", "With", 1)
 		pubKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(cert)
 		subjPubKeyInfo = getPublicKeyInfo(pubKeyInfo, omit)
+		authKeyId = x509util.EncodeUpperCase2DigitHex(cert.AuthorityKeyId)
+		subjKeyId = x509util.EncodeUpperCase2DigitHex(cert.SubjectKeyId)
+
+		for _, u := range x509util.KeyUsage(cert.KeyUsage).Decompose() {
+			keyUsage = append(keyUsage, fmt.Sprintf("%s (%s)", u.Message(), u.String()))
+		}
+		for _, u := range cert.ExtKeyUsage {
+			extKeyUsage = append(extKeyUsage, fmt.Sprintf("%s (%s)", x509util.ExtKeyUsage(u).Message(), x509util.ExtKeyUsage(u).String()))
+		}
+
+		if cert.BasicConstraintsValid {
+			var pathLen string
+			if (cert.MaxPathLenZero && cert.MaxPathLen == 0) || cert.MaxPathLen > 0 {
+				pathLen = strconv.Itoa(cert.MaxPathLen)
+			}
+			bc = &basicConstraints{
+				CA:                cert.IsCA,
+				PathLenConstraint: pathLen,
+			}
+		}
+
+		if cert.OCSPServer != nil && cert.IssuingCertificateURL != nil {
+			authInfoAccess = &authorityInformationAccess{
+				OCSP:      cert.OCSPServer,
+				CAIssuers: cert.IssuingCertificateURL,
+			}
+		}
 	}
 
 	return &CertificateDetails{
@@ -95,10 +159,20 @@ func NewCertificateDetails(cert *x509.Certificate) *CertificateDetails {
 		Subject:        x509util.DistinguishedName(cert.Subject, dnType),
 		SubjectAltName: sans,
 		Validity: validity{
-			NotBefore: cert.NotBefore.String(),
-			NotAfter:  cert.NotAfter.String(),
+			NotBefore: cert.NotBefore.Format(timeFormat),
+			NotAfter:  cert.NotAfter.Format(timeFormat),
 		},
-		SubjectPublicKeyInfo: subjPubKeyInfo,
+		Version:                    version,
+		SerialNumber:               serialNumber,
+		SignatureAlgorithm:         sigAlgo,
+		SubjectPublicKeyInfo:       subjPubKeyInfo,
+		AuthorityKeyIdentifier:     authKeyId,
+		SubjectKeyIdentifier:       subjKeyId,
+		KeyUsage:                   keyUsage,
+		ExtKeyUsage:                extKeyUsage,
+		CRLDistributionPoints:      cert.CRLDistributionPoints,
+		BasicConstraints:           bc,
+		AuthorityInformationAccess: authInfoAccess,
 	}
 }
 
@@ -122,14 +196,18 @@ func getSubjectAltNames(cert *x509.Certificate) []subjectAltName {
 
 func getPublicKeyInfo(pubKeyInfo x509util.PublicKeyInfo, omit bool) *publicKeyInfo {
 	var (
+		keyString string
 		modulus   string
 		exponent  string
 		pub       string
 		nISTCurve string
 	)
 
-	keyStringLines := createPublicKeyStringLines(pubKeyInfo.KeyString, omit)
-	keyString := strings.Join(keyStringLines, "\n")
+	if omit && len(pubKeyInfo.KeyString) > publicKeyLineLength {
+		keyString = pubKeyInfo.KeyString[:publicKeyLineLength] + "...(omitted)"
+	} else {
+		keyString = pubKeyInfo.KeyString
+	}
 
 	switch pubKeyInfo.PublicKeyAlgorithm {
 	case x509.RSA:
@@ -146,7 +224,6 @@ func getPublicKeyInfo(pubKeyInfo x509util.PublicKeyInfo, omit bool) *publicKeyIn
 		Name:               pubKeyInfo.SourceName,
 		PublicKeyAlgorithm: pubKeyInfo.PublicKeyAlgorithm.String(),
 		Type:               pubKeyInfo.Type,
-		KeyStringLines:     keyStringLines,
 		Modulus:            modulus,
 		Exponent:           exponent,
 		Pub:                pub,
@@ -154,22 +231,16 @@ func getPublicKeyInfo(pubKeyInfo x509util.PublicKeyInfo, omit bool) *publicKeyIn
 	}
 }
 
-func createPublicKeyStringLines(keyString string, omit bool) []string {
-	const lineLength = 45
+func createPublicKeyStringLines(keyString string) []string {
 	var lines []string
-	if omit {
-		lines = append(lines, keyString[:lineLength])
-		lines = append(lines, "...(omitted)")
-	} else {
+	for i := 0; i < len(keyString); i = i + publicKeyLineLength {
 		var line string
-		for i := 0; i < len(keyString); i = i + lineLength {
-			if i+lineLength < len(keyString) {
-				line = keyString[i : i+lineLength]
-			} else {
-				line = keyString[i:]
-			}
-			lines = append(lines, line)
+		if i+publicKeyLineLength < len(keyString) {
+			line = keyString[i : i+publicKeyLineLength]
+		} else {
+			line = keyString[i:]
 		}
+		lines = append(lines, line)
 	}
 	return lines
 }
@@ -183,8 +254,31 @@ func printCertificate(indent int, details *CertificateDetails) {
 	printKeyValueIfExists(indent+4, "Not After ", details.Validity.NotAfter)
 
 	if verbose > 1 {
+		printKeyValueIfExists(indent, "Version", details.Version)
+		printKeyValuesIfExists(indent, "Serial Number", []string{details.SerialNumber})
+		printKeyValueIfExists(indent, "Signature Algorithm", details.SignatureAlgorithm)
+
 		printKey(indent, "Subject Public Key Info")
 		printPublicKey(indent, details.SubjectPublicKeyInfo)
+
+		printKeyValuesIfExists(indent, "Authority Key Identifier", []string{details.AuthorityKeyIdentifier})
+		printKeyValuesIfExists(indent, "Subject Key Identifier", []string{details.SubjectKeyIdentifier})
+		printKeyValuesIfExists(indent, "Key Usage", details.KeyUsage)
+		printKeyValuesIfExists(indent, "Extended Key Usage", details.ExtKeyUsage)
+
+		if details.BasicConstraints != nil {
+			printKey(indent, "Basic Constraints")
+			printKeyValueIfExists(indent+4, "CA", strconv.FormatBool(details.BasicConstraints.CA))
+			printKeyValueIfExists(indent+4, "pathlen", details.BasicConstraints.PathLenConstraint)
+		}
+
+		printKeyValuesIfExists(indent, "CRL Distribution Points", details.CRLDistributionPoints)
+
+		if details.AuthorityInformationAccess != nil {
+			printKey(indent, "Authority Information Access")
+			printKeyValueIfExists(indent+4, "OCSP", strings.Join(details.AuthorityInformationAccess.OCSP, ", "))
+			printKeyValueIfExists(indent+4, "CA Issuers", strings.Join(details.AuthorityInformationAccess.CAIssuers, ", "))
+		}
 	}
 }
 
@@ -205,13 +299,8 @@ func printSubjectAltName(indent int, sans []subjectAltName) {
 func printPublicKey(indent int, pubKeyInfo *publicKeyInfo) {
 	printKeyValueIfExists(indent+4, "Public Key Algorithm", pubKeyInfo.PublicKeyAlgorithm)
 	printIndentedLine(indent+8, pubKeyInfo.Type)
-	printKeyIfExists(indent+8, "Modulus", pubKeyInfo.Modulus)
-	printKeyIfExists(indent+8, "pub", pubKeyInfo.Pub)
-
-	for _, line := range pubKeyInfo.KeyStringLines {
-		printIndentedLine(indent+12, line)
-	}
-
+	printKeyValuesIfExists(indent+8, "Modulus", createPublicKeyStringLines(pubKeyInfo.Modulus))
+	printKeyValuesIfExists(indent+8, "pub", createPublicKeyStringLines(pubKeyInfo.Pub))
 	printKeyValueIfExists(indent+8, "Exponent", pubKeyInfo.Exponent)
 	printKeyValueIfExists(indent+8, "NIST Curve", pubKeyInfo.NISTCurve)
 }

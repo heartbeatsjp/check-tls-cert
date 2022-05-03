@@ -38,6 +38,7 @@ func TestNewCertificateChecker(t *testing.T) {
 	//     Validity:
 	//         Not Before: 2021-06-21 03:16:35 +0000 UTC
 	//         Not After : 2022-06-21 03:16:35 +0000 UTC
+	//     Signature Algorithm: SHA256WithRSA
 	//     Subject Public Key Info:
 	//         Public Key Algorithm: RSA
 	//             RSA Public-Key: (2048 bit)
@@ -77,7 +78,8 @@ func TestNewCertificateChecker(t *testing.T) {
     Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
-	assert.Contains(w.String(), `    Subject Public Key Info:
+	assert.Contains(w.String(), `    Signature Algorithm: SHA256WithRSA
+    Subject Public Key Info:
         Public Key Algorithm: RSA
             RSA Public-Key: (2048 bit)
             Modulus:`)
@@ -93,6 +95,7 @@ func TestNewCertificateChecker(t *testing.T) {
 	//     Validity:
 	//         Not Before: 2021-06-21 03:16:35 +0000 UTC
 	//         Not After : 2022-06-21 03:16:35 +0000 UTC
+	//     Signature Algorithm: SHA256WithRSA
 	//     Subject Public Key Info:
 	//         Public Key Algorithm: ECDSA
 	//             Public-Key: (256 bit)
@@ -118,7 +121,8 @@ func TestNewCertificateChecker(t *testing.T) {
     Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
-	assert.Contains(w.String(), `    Subject Public Key Info:
+	assert.Contains(w.String(), `    Signature Algorithm: SHA256WithRSA
+    Subject Public Key Info:
         Public Key Algorithm: ECDSA
             Public-Key: (256 bit)
             pub:`)
@@ -134,6 +138,7 @@ func TestNewCertificateChecker(t *testing.T) {
 	//     Validity:
 	//         Not Before: 2021-06-21 03:16:35 +0000 UTC
 	//         Not After : 2022-06-21 03:16:35 +0000 UTC
+	//     Signature Algorithm: SHA256WithRSA
 	//     Subject Public Key Info:
 	//         Public Key Algorithm: Ed25519
 	//             ED25519 Public-Key:
@@ -156,7 +161,8 @@ func TestNewCertificateChecker(t *testing.T) {
     Subject Alternative Name:
         DNS: server-a.test
         DNS: www.server-a.test`)
-	assert.Contains(w.String(), `    Subject Public Key Info:
+	assert.Contains(w.String(), `    Signature Algorithm: SHA256WithRSA
+    Subject Public Key Info:
         Public Key Algorithm: Ed25519
             ED25519 Public-Key:
             pub:`)
@@ -167,15 +173,18 @@ func TestCertificateChecker(t *testing.T) {
 	assert := assert.New(t)
 	w := strings.Builder{}
 	checker.SetOutput(&w)
-	checker.SetVerbose(2)
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
 	serverCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+
+	// verbose 1
+	checker.SetVerbose(1)
 	c := checker.NewCertificateChecker(serverCert)
 	assert.Equal("Certificate", c.Name())
 	assert.Equal(checker.INFO, c.Status())
 	assert.Equal("the certificate information is as follows", c.Message())
+
 	assert.Equal("CN=server-a.test", c.Details().(*checker.CertificateDetails).Subject)
 
 	c.PrintName()
@@ -188,13 +197,61 @@ func TestCertificateChecker(t *testing.T) {
 
 	w.Reset()
 	c.PrintDetails()
-	assert.Contains(w.String(), `    Issuer : CN=Intermediate CA A RSA
-    Subject: CN=server-a.test
+	assert.Regexp(`    Issuer : CN=Intermediate CA A RSA
+    Subject: CN=server-a\.test
     Subject Alternative Name:
-        DNS: server-a.test
-        DNS: www.server-a.test`)
-	assert.Contains(w.String(), `    Subject Public Key Info:
+        DNS: server-a\.test
+        DNS: www\.server-a\.test
+        IP Address: 192\.0\.2\.1
+        email: foo@example\.test
+        URI: https://server-a\.test/
+    Validity:
+        Not Before: [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \+0000
+        Not After : [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \+0000
+`,
+		w.String())
+
+	// verbose 2
+	checker.SetVerbose(2)
+	c = checker.NewCertificateChecker(serverCert)
+
+	w.Reset()
+	c.PrintDetails()
+	assert.Regexp(`    Issuer : CN=Intermediate CA A RSA
+    Subject: CN=server-a\.test
+    Subject Alternative Name:
+        DNS: server-a\.test
+        DNS: www\.server-a\.test
+        IP Address: 192\.0\.2\.1
+        email: foo@example\.test
+        URI: https://server-a\.test/
+    Validity:
+        Not Before: [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \+0000
+        Not After : [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} \+0000
+    Version: 3
+    Serial Number:
+        ([0-9A-F]{2}:)+[0-9A-F]{2}
+    Signature Algorithm: SHA256WithRSA
+    Subject Public Key Info:
         Public Key Algorithm: RSA
-            RSA Public-Key: (2048 bit)
-            Modulus:`)
+            RSA Public-Key: \(2048 bit\)
+            Modulus:
+                ([0-9a-f]{2}:)+
+                ...\(omitted\)
+            Exponent: 65537 \(0x10001\)
+    Authority Key Identifier:
+        ([0-9A-F]{2}:)+[0-9A-F]{2}
+    Subject Key Identifier:
+        ([0-9A-F]{2}:)+[0-9A-F]{2}
+    Key Usage:
+        Digital Signature \(digitalSignature\)
+        Key Encipherment \(keyEncipherment\)
+    Extended Key Usage:
+        TLS Web Server Authentication \(serverAuth\)
+        TLS Web Client Authentication \(clientAuth\)
+    Basic Constraints:
+        CA: false
+`,
+		w.String())
+
 }
