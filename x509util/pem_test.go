@@ -23,7 +23,7 @@ func TestContainsPEMCertificate(t *testing.T) {
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMCertificate(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa-der.crt")
+	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa.der")
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMCertificate(data))
 
@@ -31,7 +31,7 @@ func TestContainsPEMCertificate(t *testing.T) {
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMCertificate(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa-der.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa.der")
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMCertificate(data))
 }
@@ -59,7 +59,7 @@ func TestContainsPEMPrivateKey(t *testing.T) {
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMPrivateKey(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa-der.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa.der")
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMPrivateKey(data))
 
@@ -67,7 +67,7 @@ func TestContainsPEMPrivateKey(t *testing.T) {
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMPrivateKey(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa-der.crt")
+	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa.der")
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMPrivateKey(data))
 }
