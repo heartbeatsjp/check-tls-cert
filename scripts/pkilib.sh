@@ -36,6 +36,7 @@ _gen_server_private_key() {
   local pass_file=$4
 
   traditional_key_file=${key_file%.key}-traditional.key
+  der_key_file=${key_file%.key}-der.key
 
   if [[ -n ${cipher} ]]; then
     cipher=-${cipher}
@@ -54,6 +55,7 @@ _gen_server_private_key() {
       openssl genpkey -out ${key_file} -algorithm RSA -pkeyopt rsa_keygen_bits:2048
       echo "openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}"
       openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}
+      openssl pkey -in ${key_file} -outform DER -out ${der_key_file}
       if [[ -n ${cipher} ]]; then
         echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
         openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
@@ -66,6 +68,7 @@ _gen_server_private_key() {
       openssl genpkey -out ${key_file} -algorithm EC -pkeyopt ec_paramgen_curve:prime256v1
       echo "openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}"
       openssl pkey -in ${key_file} -traditional -out ${traditional_key_file}
+      openssl pkey -in ${key_file} -outform DER -out ${der_key_file}
       if [[ -n ${cipher} ]]; then
         echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
         openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
@@ -76,6 +79,7 @@ _gen_server_private_key() {
     "ed25519")
       echo "openssl genpkey -out ${key_file} -algorithm ED25519"
       openssl genpkey -out ${key_file} -algorithm ED25519
+      openssl pkey -in ${key_file} -outform DER -out ${der_key_file}
       if [[ -n ${cipher} ]]; then
         echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
         openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
@@ -84,6 +88,7 @@ _gen_server_private_key() {
     "ed488")
       echo "openssl genpkey -out ${key_file} -algorithm ED448"
       openssl genpkey -out ${key_file} -algorithm ED448
+      openssl pkey -in ${key_file} -outform DER -out ${der_key_file}
       if [[ -n ${cipher} ]]; then
         echo "openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}"
         openssl pkey -in ${key_file} -out ${encrypted_key_file} ${cipher} ${passoutopt}
@@ -174,6 +179,8 @@ _gen_server_cert() {
   local days=$7
   local startdate=$8
 
+  der_cert_file=${cert_file%.crt}-der.crt
+
   if [[ -n "${startdate}" ]]; then
     now=$(date)
     sudo date -s ${startdate} -u > /dev/null
@@ -197,6 +204,7 @@ EOT
   openssl x509 -in ${cert_file} -noout -startdate -enddate
   rm ${csr_file}
   rm ${ca_cert_file%.crt}.srl
+  openssl x509 -in ${cert_file} -outform DER -out ${der_cert_file}
   echo "Done."
   echo ""
 

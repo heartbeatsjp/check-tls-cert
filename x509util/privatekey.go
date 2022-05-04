@@ -27,26 +27,96 @@ type PrivateKeyInfo struct {
 
 // ParsePrivateKeyFile parses a private key file in PEM format and returns a private key.
 func ParsePrivateKeyFile(keyFile string, password []byte) (privKeyInfo PrivateKeyInfo, err error) {
-	block, isEncrypted, err := readPrivateKeyFile(keyFile)
-	if err != nil {
+	var data []byte
+
+	if data, err = os.ReadFile(keyFile); err != nil {
 		return
 	}
 
-	if isEncrypted {
-		for len(password) == 0 {
-			fmt.Printf("Enter password for %s: ", keyFile)
-			password, err = term.ReadPassword(int(os.Stdin.Fd()))
-			fmt.Println()
+	if ContainsPEMPrivateKey(data) {
+		// PEM format
+		block, isEncrypted, err := readPEMPrivateKey(data)
+		if err != nil {
+			return privKeyInfo, err
+		}
+		if isEncrypted {
+			password, err = readPassword(password, keyFile)
 			if err != nil {
-				return
+				return privKeyInfo, err
 			}
-			if len(password) > 0 {
-				break
-			}
-			fmt.Println("Error: password is empty")
+		}
+		return parsePEMPrivateKey(block, isEncrypted, password)
+	} else if ContainsPEMCertificate(data) {
+		// Skip
+	} else {
+		// DER format
+		privKeyInfo, err = parsePKCS1PrivateKey(data)
+		if err == nil {
+			return
+		}
+		privKeyInfo, err = parseECPrivateKey(data)
+		if err == nil {
+			return
+		}
+		privKeyInfo, err = parsePKCS8PrivateKey(data, false, nil)
+		if err == nil {
+			return
 		}
 	}
 
+	err = errors.New("no valid private key")
+	return
+}
+
+func readPassword(password []byte, keyFile string) ([]byte, error) {
+	var err error
+	for len(password) == 0 {
+		fmt.Printf("Enter password for %s: ", keyFile)
+		password, err = term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Println()
+		if err != nil {
+			return nil, err
+		}
+		if len(password) > 0 {
+			break
+		}
+		fmt.Println("Error: password is empty")
+	}
+	return password, nil
+}
+
+func readPEMPrivateKey(data []byte) (block *pem.Block, isEncrypted bool, err error) {
+	var rest []byte
+
+	// It uses a for loop to ignore other types in the PEM file.
+	for len(data) > 0 {
+		block, rest = pem.Decode(data)
+		data = rest
+
+		switch block.Type {
+		case "RSA PRIVATE KEY":
+			//lint:ignore SA1019 Encrypted PEM files are still used.
+			isEncrypted = x509.IsEncryptedPEMBlock(block)
+			return
+		case "EC PRIVATE KEY":
+			//lint:ignore SA1019 Encrypted PEM files are still used.
+			isEncrypted = x509.IsEncryptedPEMBlock(block)
+			return
+		case "PRIVATE KEY":
+			return
+		case "ENCRYPTED PRIVATE KEY":
+			isEncrypted = true
+			return
+		default:
+		}
+	}
+
+	//lint:ignore ST1005 "Private Key" is a component name.
+	err = errors.New("Private Key: unknown type")
+	return
+}
+
+func parsePEMPrivateKey(block *pem.Block, isEncrypted bool, password []byte) (privKeyInfo PrivateKeyInfo, err error) {
 	var der = block.Bytes
 
 	switch block.Type {
@@ -76,41 +146,6 @@ func ParsePrivateKeyFile(keyFile string, password []byte) (privKeyInfo PrivateKe
 		err = errors.New("Private Key: unknown type")
 	}
 
-	return
-}
-
-func readPrivateKeyFile(keyFile string) (block *pem.Block, isEncrypted bool, err error) {
-	var pemData, rest []byte
-
-	if pemData, err = os.ReadFile(keyFile); err != nil {
-		return
-	}
-
-	// It uses a for loop to ignore other types in the PEM file.
-	for len(pemData) > 0 {
-		block, rest = pem.Decode(pemData)
-		pemData = rest
-
-		switch block.Type {
-		case "RSA PRIVATE KEY":
-			//lint:ignore SA1019 Encrypted PEM files are still used.
-			isEncrypted = x509.IsEncryptedPEMBlock(block)
-			return
-		case "EC PRIVATE KEY":
-			//lint:ignore SA1019 Encrypted PEM files are still used.
-			isEncrypted = x509.IsEncryptedPEMBlock(block)
-			return
-		case "PRIVATE KEY":
-			return
-		case "ENCRYPTED PRIVATE KEY":
-			isEncrypted = true
-			return
-		default:
-		}
-	}
-
-	//lint:ignore ST1005 "Private Key" is a component name.
-	err = errors.New("Private Key: unknown type")
 	return
 }
 
