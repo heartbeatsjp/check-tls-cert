@@ -14,8 +14,8 @@ gen_root_ca_cert() {
   local days=$3
   local startdate=$4
 
-  ca_key_file=${PRIVATE_KEY_DIR}/${name}.key
-  cert_file=${CA_CERT_DIR}/${name}.crt
+  ca_key_file=${PRIVATE_KEY_DIR}/${name}.pem
+  cert_file=${CA_CERT_DIR}/${name}.pem
 
   _gen_root_ca_cert ${ca_key_file} ${cert_file} "${subject}" ${days} ${startdate}
 }
@@ -28,14 +28,14 @@ gen_intermediate_ca_cert() {
   local suffix=$5
   local startdate=$6
 
-  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.key
-  ca_cert_file=${CA_CERT_DIR}/${issuer_name}.crt
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.pem
+  ca_cert_file=${CA_CERT_DIR}/${issuer_name}.pem
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
   csr_file=${CA_CERT_DIR}/${name}.csr
-  cert_file=${CA_CERT_DIR}/${name}.crt
+  cert_file=${CA_CERT_DIR}/${name}.pem
 
   if [[ -n "${suffix}" ]]; then
-    cert_file=${CA_CERT_DIR}/${name}-${suffix}.crt
+    cert_file=${CA_CERT_DIR}/${name}-${suffix}.pem
   fi
 
   _gen_intermediate_ca_cert ${ca_key_file} ${ca_cert_file} ${key_file} ${csr_file} ${cert_file} "${subject}" ${days} ${startdate}
@@ -58,7 +58,7 @@ gen_intermediate_ca_cert ca-root-g1-rsa ca-root-g2-rsa "/CN=ROOT CA G2 RSA" 7305
 gen_intermediate_ca_cert ca-root-g1-rsa ca-root-g2-ecdsa "/CN=ROOT CA G2 ECDSA" 7305 cross '2015-01-01'
 
 
-cat ${CA_CERT_DIR}/{ca-root-g1-rsa,ca-root-g2-rsa,ca-root-g2-ecdsa}.crt > ${CA_CERT_DIR}/ca-root.pem
+cat ${CA_CERT_DIR}/{ca-root-g1-rsa,ca-root-g2-rsa,ca-root-g2-ecdsa}.pem > ${CA_CERT_DIR}/ca-root.pem
 
 exit
 

@@ -14,8 +14,8 @@ import (
 func TestExtractPublicKey(t *testing.T) {
 	assert := assert.New(t)
 
-	privKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
-	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	privKeyFile := "../test/testdata/pki/private/server-a-rsa.pem"
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
 	pubKeyInfo, _ := x509util.ExtractPublicKeyFromCertificate(certs[0])
 	privKeyInfo, _ := x509util.ParsePrivateKeyFile(privKeyFile, nil)
@@ -28,8 +28,8 @@ func TestExtractPublicKey(t *testing.T) {
 	pubKeyInfoInPrivKey.SourceName = ""
 	assert.EqualValues(pubKeyInfo, pubKeyInfoInPrivKey)
 
-	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa.key"
-	certFile = "../test/testdata/pki/cert/valid/server-a-ecdsa.crt"
+	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa.pem"
+	certFile = "../test/testdata/pki/cert/valid/server-a-ecdsa.pem"
 	certs, _ = x509util.ParseCertificateFiles(certFile)
 	pubKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
 	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
@@ -42,8 +42,8 @@ func TestExtractPublicKey(t *testing.T) {
 	pubKeyInfoInPrivKey.SourceName = ""
 	assert.EqualValues(pubKeyInfo, pubKeyInfoInPrivKey)
 
-	privKeyFile = "../test/testdata/pki/private/server-a-ed25519.key"
-	certFile = "../test/testdata/pki/cert/valid/server-a-ed25519.crt"
+	privKeyFile = "../test/testdata/pki/private/server-a-ed25519.pem"
+	certFile = "../test/testdata/pki/cert/valid/server-a-ed25519.pem"
 	certs, _ = x509util.ParseCertificateFiles(certFile)
 	pubKeyInfo, _ = x509util.ExtractPublicKeyFromCertificate(certs[0])
 	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)

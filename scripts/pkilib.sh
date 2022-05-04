@@ -35,13 +35,13 @@ _gen_server_private_key() {
   local cipher=$3
   local pass_file=$4
 
-  traditional_key_file=${key_file%.key}-traditional.key
-  der_key_file=${key_file%.key}.der
+  traditional_key_file=${key_file%.pem}-traditional.pem
+  der_key_file=${key_file%.pem}.der
 
   if [[ -n ${cipher} ]]; then
     cipher=-${cipher}
-    encrypted_key_file=${key_file%.key}-encrypted.key
-    traditional_encrypted_key_file=${traditional_key_file%.key}-encrypted.key
+    encrypted_key_file=${key_file%.pem}-encrypted.pem
+    traditional_encrypted_key_file=${traditional_key_file%.pem}-encrypted.pem
   fi
   if [[ -n ${pass_file} ]]; then
     passoutopt="-passout file:${pass_file}"
@@ -159,7 +159,7 @@ EOT
     -out ${cert_file}
   openssl x509 -in ${cert_file} -noout -startdate -enddate
   rm ${csr_file}
-  rm ${ca_cert_file%.crt}.srl
+  rm ${ca_cert_file%.pem}.srl
   echo "Done."
   echo ""
 
@@ -179,7 +179,7 @@ _gen_server_cert() {
   local days=$7
   local startdate=$8
 
-  der_cert_file=${cert_file%.crt}.der
+  der_cert_file=${cert_file%.pem}.der
 
   if [[ -n "${startdate}" ]]; then
     now=$(date)
@@ -203,7 +203,7 @@ EOT
     -out ${cert_file}
   openssl x509 -in ${cert_file} -noout -startdate -enddate
   rm ${csr_file}
-  rm ${ca_cert_file%.crt}.srl
+  rm ${ca_cert_file%.pem}.srl
   openssl x509 -in ${cert_file} -outform DER -out ${der_cert_file}
   echo "Done."
   echo ""
@@ -259,7 +259,7 @@ EOT
     -out ${cert_file}
   openssl x509 -in ${cert_file} -noout -startdate -enddate
   rm ${csr_file}
-  rm ${ca_cert_file%.crt}.srl
+  rm ${ca_cert_file%.pem}.srl
   echo "Done."
   echo ""
 

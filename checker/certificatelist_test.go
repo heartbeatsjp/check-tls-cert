@@ -47,7 +47,7 @@ func TestNewCertificateListChecker(t *testing.T) {
 	//         Subject   : CN=server-a.test
 	//         Issuer    : CN=Intermediate CA A RSA
 	//         Expiration: 2022-06-22 13:42:19 +0900
-	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 	assert.Nil(err)
 	c = checker.NewCertificateListChecker(certs)
 
@@ -81,7 +81,7 @@ func TestNewCertificateListChecker(t *testing.T) {
 	//         Subject   : CN=Intermediate CA A RSA
 	//         Issuer    : CN=ROOT CA G2 RSA
 	//         Expiration: 2031-06-23 13:42:19 +0900
-	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	assert.Nil(err)
 	c = checker.NewCertificateListChecker(certs)
 
@@ -126,7 +126,7 @@ func TestNewCertificateListChecker(t *testing.T) {
 	//         Subject   : CN=Intermediate CA A RSA
 	//         Issuer    : CN=ROOT CA G2 RSA
 	//         Expiration: 2031-06-23 15:08:25 +0900
-	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	assert.Nil(err)
 	c = checker.NewCertificateListChecker(certs)
 
@@ -171,7 +171,7 @@ func TestNewCertificateListChecker(t *testing.T) {
 	//         Issuer    : CN=ROOT CA G2 RSA
 	//         Expiration: 2020-01-01 09:00:00 +0900
 	//         Error     : the certificate has expired on 2020-01-01 09:00:00 +0900
-	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
+	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.pem")
 	assert.Nil(err)
 	c = checker.NewCertificateListChecker(certs)
 
@@ -216,7 +216,7 @@ func TestNewCertificateListChecker(t *testing.T) {
 	//         Subject   : CN=Intermediate CA A RSA
 	//         Issuer    : CN=ROOT CA G2 RSA
 	//         Expiration: 2031-06-23 15:08:25 +0900
-	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	certs, err = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	assert.Nil(err)
 	c = checker.NewCertificateListChecker(certs)
 
@@ -259,7 +259,7 @@ func TestCertificateListChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	certs, err := x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	certs, err := x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	assert.Nil(err)
 	c := checker.NewCertificateListChecker(certs)
 	assert.Equal("Peer Certificate List", c.Name())

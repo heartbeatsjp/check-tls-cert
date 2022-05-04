@@ -16,11 +16,11 @@ gen_intermediate_ca_cert() {
   local days=$4
   local startdate=$5
 
-  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.key
-  ca_cert_file=$(_lookup_file ${CA_CERT_DIR} ${CERT_DIR} ${issuer_name}.crt)
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.pem
+  ca_cert_file=$(_lookup_file ${CA_CERT_DIR} ${CERT_DIR} ${issuer_name}.pem)
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
   csr_file=${CERT_DIR}/${name}.csr
-  cert_file=${CERT_DIR}/${name}.crt
+  cert_file=${CERT_DIR}/${name}.pem
 
   _gen_intermediate_ca_cert ${ca_key_file} ${ca_cert_file} ${key_file} ${csr_file} ${cert_file} "${subject}" ${days} ${startdate}
 }
@@ -32,11 +32,11 @@ gen_server_cert() {
   local days=$4
   local startdate=$5
 
-  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.key
-  ca_cert_file=${CERT_DIR}/${issuer_name}.crt
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.pem
+  ca_cert_file=${CERT_DIR}/${issuer_name}.pem
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
   csr_file=${CERT_DIR}/${name}.csr
-  cert_file=${CERT_DIR}/${name}.crt
+  cert_file=${CERT_DIR}/${name}.pem
 
   _gen_server_cert ${ca_key_file} ${ca_cert_file} ${key_file} ${csr_file} ${cert_file} ${domainname} ${days} ${startdate}
 }

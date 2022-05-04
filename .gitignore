@@ -22,7 +22,7 @@ check-tls-cert
 dist/
 
 # Certificates for test
-test/testdata/pki/cert/valid/*.crt
+test/testdata/pki/cert/valid/*.pem
 test/testdata/pki/cert/valid/*.der
 test/testdata/pki/chain/*.pem
 

@@ -26,38 +26,38 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	nonExistentFile := "../test/testdata/pki/misc/non-existent.crt"
-	emptyFile := "../test/testdata/pki/misc/empty.crt"
-	expiredServerCertFile := "../test/testdata/pki/cert/expired/server-a-rsa.crt"
-	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	nonExistentFile := "../test/testdata/pki/misc/non-existent.pem"
+	emptyFile := "../test/testdata/pki/misc/empty.pem"
+	expiredServerCertFile := "../test/testdata/pki/cert/expired/server-a-rsa.pem"
+	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	chainCertFile := "../test/testdata/pki/chain/chain-a-rsa.pem"
 	caCertFile := "../test/testdata/pki/chain/ca.pem"
 	rootCertFile := "../test/testdata/pki/root-ca/ca-root.pem"
 
 	// Non-existent file
 	//
-	// CRITICAL: open ../test/testdata/pki/misc/non-existent.crt: no such file or directory
+	// CRITICAL: open ../test/testdata/pki/misc/non-existent.pem: no such file or directory
 	//     ERROR: Certificate File
-	//         File: ../test/testdata/pki/misc/non-existent.crt
-	//         Error: open ../test/testdata/pki/misc/non-existent.crt: no such file or directory
+	//         File: ../test/testdata/pki/misc/non-existent.pem
+	//         Error: open ../test/testdata/pki/misc/non-existent.pem: no such file or directory
 	c = checker.NewCertificateFilesChecker(nonExistentFile, "", "", "")
 
 	w.Reset()
 	c.PrintStatus()
 	assert.Equal(checker.CRITICAL, c.Status())
-	assert.Contains(w.String(), "CRITICAL: open ../test/testdata/pki/misc/non-existent.crt: no such file or directory")
+	assert.Contains(w.String(), "CRITICAL: open ../test/testdata/pki/misc/non-existent.pem: no such file or directory")
 
 	w.Reset()
 	c.PrintDetails()
 	assert.Contains(w.String(), `    ERROR: Certificate File
-        File: ../test/testdata/pki/misc/non-existent.crt
-        Error: open ../test/testdata/pki/misc/non-existent.crt: no such file or directory`)
+        File: ../test/testdata/pki/misc/non-existent.pem
+        Error: open ../test/testdata/pki/misc/non-existent.pem: no such file or directory`)
 
 	// Empty file
 	//
 	// CRITICAL: no valid certificates
 	//     ERROR: Certificate File
-	//         File: ../test/testdata/pki/misc/empty.crt
+	//         File: ../test/testdata/pki/misc/empty.pem
 	//         Error: no valid certificates
 	c = checker.NewCertificateFilesChecker(emptyFile, "", "", "")
 
@@ -69,7 +69,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	w.Reset()
 	c.PrintDetails()
 	assert.Contains(w.String(), `    ERROR: Certificate File
-        File: ../test/testdata/pki/misc/empty.crt
+        File: ../test/testdata/pki/misc/empty.pem
         Error: no valid certificates`)
 
 	// Intermediate and root certificates not found
@@ -77,7 +77,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	//
 	// OK: all files contain one or more certificates
 	//     OK: Certificate File
-	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
 	//         Certificate:
 	//             - OK: server-a.test
 	//               Subject   : CN=server-a.test
@@ -95,12 +95,12 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	c.PrintDetails()
 
 	assert.Equal(checker.OK, certFileInfoList[0].Status)
-	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.crt", certFileInfoList[0].File)
+	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.pem", certFileInfoList[0].File)
 	assert.Equal(checker.OK, certFileInfoList[0].CertificateInfoList[0].Status)
 	assert.Equal("server-a.test", certFileInfoList[0].CertificateInfoList[0].CommonName)
 	assert.Equal("CN=server-a.test", certFileInfoList[0].CertificateInfoList[0].Subject)
 	assert.Contains(w.String(), `    OK: Certificate File
-        File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+        File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
         Certificate:
             - OK: server-a.test
               Subject   : CN=server-a.test
@@ -112,7 +112,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	//
 	// OK: all files contain one or more certificates
 	//     OK: Certificate File
-	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
 	//         Certificate:
 	//             - OK: server-a.test
 	//               Subject   : CN=server-a.test
@@ -137,12 +137,12 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	c.PrintDetails()
 
 	assert.Equal(checker.OK, certFileInfoList[0].Status)
-	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.crt", certFileInfoList[0].File)
+	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.pem", certFileInfoList[0].File)
 	assert.Equal(checker.OK, certFileInfoList[0].CertificateInfoList[0].Status)
 	assert.Equal("server-a.test", certFileInfoList[0].CertificateInfoList[0].CommonName)
 	assert.Equal("CN=server-a.test", certFileInfoList[0].CertificateInfoList[0].Subject)
 	assert.Contains(w.String(), `    OK: Certificate File
-        File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+        File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
         Certificate:
             - OK: server-a.test
               Subject   : CN=server-a.test
@@ -166,7 +166,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	//
 	// CRITICAL: the certificate has expired on 2020-01-01 09:00:00 +0900
 	//     ERROR: Certificate File
-	//         File: ../test/testdata/pki/cert/expired/server-a-rsa.crt
+	//         File: ../test/testdata/pki/cert/expired/server-a-rsa.pem
 	//         Error: the certificate has expired on 2020-01-01 09:00:00 +0900
 	//         Certificate:
 	//             - ERROR: server-a.test
@@ -193,12 +193,12 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	c.PrintDetails()
 
 	assert.Equal(checker.ERROR, certFileInfoList[0].Status)
-	assert.Equal("../test/testdata/pki/cert/expired/server-a-rsa.crt", certFileInfoList[0].File)
+	assert.Equal("../test/testdata/pki/cert/expired/server-a-rsa.pem", certFileInfoList[0].File)
 	assert.Equal(checker.ERROR, certFileInfoList[0].CertificateInfoList[0].Status)
 	assert.Equal("server-a.test", certFileInfoList[0].CertificateInfoList[0].CommonName)
 	assert.Equal("CN=server-a.test", certFileInfoList[0].CertificateInfoList[0].Subject)
 	assert.Contains(w.String(), `    ERROR: Certificate File
-        File: ../test/testdata/pki/cert/expired/server-a-rsa.crt
+        File: ../test/testdata/pki/cert/expired/server-a-rsa.pem
         Error: the certificate has expired on `)
 	assert.Contains(w.String(), `        Certificate:
             - ERROR: server-a.test
@@ -224,7 +224,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	//
 	// OK: all files contain one or more certificates
 	//     OK: Certificate File
-	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
 	//         Certificate:
 	//             - OK: server-a.test
 	//               Subject   : CN=server-a.test
@@ -264,12 +264,12 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	c.PrintDetails()
 
 	assert.Equal(checker.OK, certFileInfoList[0].Status)
-	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.crt", certFileInfoList[0].File)
+	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.pem", certFileInfoList[0].File)
 	assert.Equal(checker.OK, certFileInfoList[0].CertificateInfoList[0].Status)
 	assert.Equal("server-a.test", certFileInfoList[0].CertificateInfoList[0].CommonName)
 	assert.Equal("CN=server-a.test", certFileInfoList[0].CertificateInfoList[0].Subject)
 	assert.Contains(w.String(), `    OK: Certificate File
-        File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+        File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
         Certificate:
             - OK: server-a.test
               Subject   : CN=server-a.test
@@ -306,7 +306,7 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	//
 	// OK: all files contain one or more certificates
 	//     OK: Certificate File
-	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+	//         File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
 	//         Certificate:
 	//             - OK: server-a.test
 	//               Subject   : CN=server-a.test
@@ -357,12 +357,12 @@ func TestNewCertificateFilesChecker(t *testing.T) {
 	c.PrintDetails()
 
 	assert.Equal(checker.OK, certFileInfoList[0].Status)
-	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.crt", certFileInfoList[0].File)
+	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.pem", certFileInfoList[0].File)
 	assert.Equal(checker.OK, certFileInfoList[0].CertificateInfoList[0].Status)
 	assert.Equal("server-a.test", certFileInfoList[0].CertificateInfoList[0].CommonName)
 	assert.Equal("CN=server-a.test", certFileInfoList[0].CertificateInfoList[0].Subject)
 	assert.Contains(w.String(), `    OK: Certificate File
-        File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+        File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
         Certificate:
             - OK: server-a.test
               Subject   : CN=server-a.test
@@ -424,7 +424,7 @@ func TestCertificateFilesChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	chainCertFile := "../test/testdata/pki/chain/chain-a-rsa.pem"
 	rootCertFile := "../test/testdata/pki/root-ca/ca-root.pem"
 
@@ -432,7 +432,7 @@ func TestCertificateFilesChecker(t *testing.T) {
 	assert.Equal("Certificate Files", c.Name())
 	assert.Equal(checker.OK, c.Status())
 	assert.Equal("all files contain one or more certificates", c.Message())
-	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.crt", c.Details().(checker.CertificateFilesDetails)[0].File)
+	assert.Equal("../test/testdata/pki/cert/valid/server-a-rsa.pem", c.Details().(checker.CertificateFilesDetails)[0].File)
 
 	c.PrintName()
 	assert.Equal("[Certificate Files]\n", w.String())
@@ -444,7 +444,7 @@ func TestCertificateFilesChecker(t *testing.T) {
 	w.Reset()
 	c.PrintDetails()
 	assert.Contains(w.String(), `    OK: Certificate File
-        File: ../test/testdata/pki/cert/valid/server-a-rsa.crt
+        File: ../test/testdata/pki/cert/valid/server-a-rsa.pem
         Certificate:
             - OK: server-a.test
               Subject   : CN=server-a.test

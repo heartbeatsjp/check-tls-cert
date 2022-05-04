@@ -240,7 +240,7 @@ To use it as a monitoring plugin, run it without the '-v' option.
 
 ```
 $ check-tls-cert file -H server-a.test \
-    -k test/testdata/pki/private/server-a-rsa.key \
+    -k test/testdata/pki/private/server-a-rsa.pem \
     -f test/testdata/pki/chain/fullchain-a-rsa.pem
 OK: all checks have been passed
 ```
@@ -251,7 +251,7 @@ To get the details of each check result, use the '-v' option.
 
 ```
 $ check-tls-cert file -H server-a.test \
-    -k test/testdata/pki/private/server-a-rsa.key \
+    -k test/testdata/pki/private/server-a-rsa.pem \
     -f test/testdata/pki/chain/fullchain-a-rsa.pem -v
 OK: all checks have been passed
 
@@ -428,14 +428,14 @@ In this case, the exit code is 0 regardless of the status.
 
 ```
 $ check-tls-cert file -H server-a.test \
-    -k test/testdata/pki/private/server-a-rsa.key \
+    -k test/testdata/pki/private/server-a-rsa.pem \
     -f test/testdata/pki/chain/fullchain-a-rsa.pem \
     --output-format json -v
 {
   "metadata": {
     "name": "check-tls-cert",
     "timestamp": "2022-04-18T15:40:55+09:00",
-    "command": "check-tls-cert file -H server-a.test -k test/testdata/pki/private/server-a-rsa.key -f test/testdata/pki/chain/fullchain-a-rsa.pem -v --output-format json",
+    "command": "check-tls-cert file -H server-a.test -k test/testdata/pki/private/server-a-rsa.pem -f test/testdata/pki/chain/fullchain-a-rsa.pem -v --output-format json",
     "status": 0
   },
   "result": {

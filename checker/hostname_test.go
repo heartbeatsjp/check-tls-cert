@@ -26,7 +26,7 @@ func TestNewHostnameChecker(t *testing.T) {
 	checker.SetCurrentTime(time.Now())
 
 	// Subject: CN=server-a.test
-	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
 	cert := certs[0]
 
@@ -106,7 +106,7 @@ func TestHostnameChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	cert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	cert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 	c := checker.NewHostnameChecker("server-a.test", cert)
 	assert.Equal("Hostname", c.Name())
 	assert.Equal(checker.OK, c.Status())

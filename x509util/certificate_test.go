@@ -21,26 +21,26 @@ func TestParseCertificateFiles(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	keyFile = "../test/testdata/pki/private/server-a-rsa.key"
+	keyFile = "../test/testdata/pki/private/server-a-rsa.pem"
 	chainCertFile = "../test/testdata/pki/chain/chain-a-rsa.pem"
 
 	// non-existent file
-	serverCertFile = "../test/testdata/pki/misc/non-existent.crt"
+	serverCertFile = "../test/testdata/pki/misc/non-existent.pem"
 	_, err = x509util.ParseCertificateFiles(serverCertFile)
 	assert.NotNil(err)
 
 	// empty file
-	serverCertFile = "../test/testdata/pki/misc/empty.crt"
+	serverCertFile = "../test/testdata/pki/misc/empty.pem"
 	_, err = x509util.ParseCertificateFiles(serverCertFile)
 	assert.NotNil(err)
 
 	// invalid format file
-	serverCertFile = "../test/testdata/pki/private/server-a-rsa.key"
+	serverCertFile = "../test/testdata/pki/private/server-a-rsa.pem"
 	_, err = x509util.ParseCertificateFiles(serverCertFile)
 	assert.NotNil(err)
 
 	// valid file (PEM)
-	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	certs, err = x509util.ParseCertificateFiles(serverCertFile)
 	assert.Nil(err)
 	assert.Equal(1, len(certs))
@@ -68,7 +68,7 @@ func TestParseCertificateFiles(t *testing.T) {
 	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
 
 	// no EOL
-	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.pem"
 	certs, err = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
 	assert.Nil(err)
 	assert.Equal(2, len(certs))
@@ -76,7 +76,7 @@ func TestParseCertificateFiles(t *testing.T) {
 	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
 
 	// Explanatory Text
-	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.pem"
 	certs, err = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
 	assert.Nil(err)
 	assert.Equal(2, len(certs))
@@ -94,22 +94,22 @@ func TestParseCertificateFile(t *testing.T) {
 	assert := assert.New(t)
 
 	// non-existent file
-	serverCertFile = "../test/testdata/pki/misc/non-existent.crt"
+	serverCertFile = "../test/testdata/pki/misc/non-existent.pem"
 	_, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.NotNil(err)
 
 	// empty file
-	serverCertFile = "../test/testdata/pki/misc/empty.crt"
+	serverCertFile = "../test/testdata/pki/misc/empty.pem"
 	_, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.NotNil(err)
 
 	// invalid format file
-	serverCertFile = "../test/testdata/pki/private/server-a-rsa.key"
+	serverCertFile = "../test/testdata/pki/private/server-a-rsa.pem"
 	_, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.NotNil(err, "file should not be a certificate: %s", serverCertFile)
 
 	// valid file (PEM)
-	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	cert, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())
@@ -121,13 +121,13 @@ func TestParseCertificateFile(t *testing.T) {
 	assert.Equal("CN=server-a.test", cert.Subject.String())
 
 	// no EOL
-	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.pem"
 	cert, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())
 
 	// Explanatory Text
-	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.pem"
 	cert, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())
@@ -142,17 +142,17 @@ func TestVerifyValidity(t *testing.T) {
 	currentTime := time.Now()
 
 	// This certificate will expire in 365 days.
-	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
 	cert := certs[0]
 
 	// This certificate has expired.
-	expiredCertFile := "../test/testdata/pki/cert/expired/server-a-rsa.crt"
+	expiredCertFile := "../test/testdata/pki/cert/expired/server-a-rsa.pem"
 	expiredCerts, _ := x509util.ParseCertificateFiles(expiredCertFile)
 	expiredCert := expiredCerts[0]
 
 	// This certificate is not yet valid.
-	notYetValidCertFile := "../test/testdata/pki/cert/notyetvalid/server-a-rsa.crt"
+	notYetValidCertFile := "../test/testdata/pki/cert/notyetvalid/server-a-rsa.pem"
 	notYetValidCerts, _ := x509util.ParseCertificateFiles(notYetValidCertFile)
 	notYetValidCert := notYetValidCerts[0]
 
@@ -202,9 +202,9 @@ func TestGetRootCertPoolAndGetIntermediateCertPool(t *testing.T) {
 	assert := assert.New(t)
 	currentTime := time.Now()
 
-	rootCertFile := "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt"
-	intermediateCertFile := "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt"
-	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	rootCertFile := "../test/testdata/pki/root-ca/ca-root-g2-rsa.pem"
+	intermediateCertFile := "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem"
+	serverCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 
 	rootCerts, _ := x509util.ParseCertificateFiles(rootCertFile)
 	intermediateCerts, _ := x509util.ParseCertificateFiles(intermediateCertFile)
@@ -239,8 +239,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-a.test (RSA)
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -250,8 +250,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-a.test (ECDSA)
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ecdsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -261,8 +261,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-a.test (Ed25519)
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-ed25519.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -272,8 +272,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-b.test (RSA)
 	// CN=Intermediate CA B RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
@@ -283,8 +283,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-b.test (ECDSA)
 	// CN=Intermediate CA B RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ecdsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
@@ -294,8 +294,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-b.test (Ed25519)
 	// CN=Intermediate CA B RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-ed25519.pem", "../test/testdata/pki/cert/valid/ca-intermediate-b-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
@@ -305,8 +305,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-c.test (RSA)
 	// CN=Intermediate CA ECDSA
 	// CN=ROOT CA G2 ECDSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-c.test", chains[0][0].Subject.String())
@@ -316,8 +316,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-c.test (ECDSA)
 	// CN=Intermediate CA ECDSA
 	// CN=ROOT CA G2 ECDSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ecdsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ecdsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-c.test", chains[0][0].Subject.String())
@@ -327,8 +327,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-c.test (Ed25519)
 	// CN=Intermediate CA ECDSA
 	// CN=ROOT CA G2 ECDSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ed25519.crt", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-c-ed25519.pem", "../test/testdata/pki/cert/valid/ca-intermediate-ecdsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-ecdsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-c.test", chains[0][0].Subject.String())
@@ -337,7 +337,7 @@ func TestBuildCertificateChains(t *testing.T) {
 
 	// CN=server-a.test
 	// CN=Intermediate CA A RSA (root CA certificate not found)
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	chains = x509util.BuildCertificateChains(certs, nil, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
 	assert.Equal("CN=Intermediate CA A RSA", chains[0][1].Subject.String())
@@ -345,8 +345,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-a.test (expired)
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -356,8 +356,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-a.test
 	// CN=Intermediate CA A RSA (expired)
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -366,8 +366,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=server-b.test
 	// CN=Intermediate CA A RSA (not an issuer of CN=server-b.test)
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-b.test", chains[0][0].Subject.String())
@@ -377,8 +377,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=Intermediate CA A RSA (specified file not correct)
 	// CN=server-a.test (RSA) (specified file not correct)
 	// CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem", "../test/testdata/pki/cert/valid/server-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=Intermediate CA A RSA", chains[0][0].Subject.String())
@@ -390,8 +390,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA (cross-signing)
 	// CN=ROOT CA G1 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -405,8 +405,8 @@ func TestBuildCertificateChains(t *testing.T) {
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA (cross-signing)
 	// CN=ROOT CA G1 RSA, CN=ROOT CA G2 RSA
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.pem", "../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	chains = x509util.BuildCertificateChains(certs, rootCertPool, currentTime)
 	assert.Equal("CN=server-a.test", chains[0][0].Subject.String())
@@ -431,9 +431,9 @@ func TestVerifyCertificate(t *testing.T) {
 	// CN=server-a.test (RSA)
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	err = x509util.VerifyCertificate(serverCert, intermediateCert, currentTime, false)
 	assert.Nil(err)
 	err = x509util.VerifyCertificate(intermediateCert, rootCert, currentTime, false)
@@ -445,8 +445,8 @@ func TestVerifyCertificate(t *testing.T) {
 
 	// CN=server-a.test
 	// CN=Intermediate CA A RSA (root CA certificate not found)
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	err = x509util.VerifyCertificate(serverCert, intermediateCert, currentTime, false)
 	assert.Nil(err)
 	err = x509util.VerifyCertificate(intermediateCert, nil, currentTime, false)
@@ -458,9 +458,9 @@ func TestVerifyCertificate(t *testing.T) {
 	// CN=server-a.test (expired)
 	// CN=Intermediate CA A RSA
 	// CN=ROOT CA G2 RSA
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/server-a-rsa.crt")
-	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/server-a-rsa.pem")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	err = x509util.VerifyCertificate(serverCert, intermediateCert, currentTime, false)
 	assert.NotNil(err)
 	assert.ErrorContains(err, "the certificate has expired on ")
@@ -470,9 +470,9 @@ func TestVerifyCertificate(t *testing.T) {
 	// CN=server-a.test
 	// CN=Intermediate CA A RSA (expired)
 	// CN=ROOT CA G2 RSA
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
-	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.pem")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	err = x509util.VerifyCertificate(serverCert, intermediateCert, currentTime, false)
 	assert.Nil(err)
 	err = x509util.VerifyCertificate(intermediateCert, rootCert, currentTime, false)
@@ -482,9 +482,9 @@ func TestVerifyCertificate(t *testing.T) {
 	// CN=server-b.test
 	// CN=Intermediate CA A RSA (not an issuer of CN=server-b.test)
 	// CN=ROOT CA G2 RSA
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-rsa.crt")
-	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-b-rsa.pem")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	err = x509util.VerifyCertificate(serverCert, intermediateCert, currentTime, false)
 	assert.NotNil(err)
 	assert.ErrorContains(err, "x509: issuer name does not match subject from issuing certificate / crypto/rsa: verification error / parent certificate may not be correct issuer")
@@ -494,9 +494,9 @@ func TestVerifyCertificate(t *testing.T) {
 	// CN=Intermediate CA A RSA (specified file not correct)
 	// CN=server-a.test (RSA) (specified file not correct)
 	// CN=ROOT CA G2 RSA
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	intermediateCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
+	rootCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	err = x509util.VerifyCertificate(serverCert, intermediateCert, currentTime, false)
 	assert.NotNil(err)
 	assert.ErrorContains(err, "x509: issuer name does not match subject from issuing certificate / x509: invalid signature: parent certificate cannot sign this kind of certificate / parent certificate may not be correct issuer")
