@@ -15,11 +15,11 @@ gen_intermediate_ca_cert() {
   local subject=$3
   local days=$4
 
-  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.key
-  ca_cert_file=$(_lookup_file ${CA_CERT_DIR} ${CERT_DIR} ${issuer_name}.crt)
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.pem
+  ca_cert_file=$(_lookup_file ${CA_CERT_DIR} ${CERT_DIR} ${issuer_name}.pem)
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
   csr_file=${CERT_DIR}/${name}.csr
-  cert_file=${CERT_DIR}/${name}.crt
+  cert_file=${CERT_DIR}/${name}.pem
 
   _gen_intermediate_ca_cert ${ca_key_file} ${ca_cert_file} ${key_file} ${csr_file} ${cert_file} "${subject}" ${days}
 }
@@ -30,11 +30,11 @@ gen_server_cert() {
   local domainname=$3
   local days=$4
 
-  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.key
-  ca_cert_file=${CERT_DIR}/${issuer_name}.crt
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  ca_key_file=${PRIVATE_KEY_DIR}/${issuer_name}.pem
+  ca_cert_file=${CERT_DIR}/${issuer_name}.pem
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
   csr_file=${CERT_DIR}/${name}.csr
-  cert_file=${CERT_DIR}/${name}.crt
+  cert_file=${CERT_DIR}/${name}.pem
 
   _gen_server_cert ${ca_key_file} ${ca_cert_file} ${key_file} ${csr_file} ${cert_file} ${domainname} ${days}
 }
@@ -90,9 +90,9 @@ gen_server_cert ca-intermediate-ecdsa server-c-ed488 "server-c.test" 365
 
 # variables PEM format
 # No EOL
-cat ${CERT_DIR}/server-a-rsa.crt | awk '!/-----END/ {print} /-----END/ {printf("%s", $0)}' > ${CERT_DIR}/misc-no-eol.crt 
+cat ${CERT_DIR}/server-a-rsa.pem | awk '!/-----END/ {print} /-----END/ {printf("%s", $0)}' > ${CERT_DIR}/misc-no-eol.pem 
 
 # Explanatory Text
-echo "Pre Explanatory Text" > ${CERT_DIR}/misc-explanatory-text.crt
-cat ${CERT_DIR}/server-a-rsa.crt >> ${CERT_DIR}/misc-explanatory-text.crt
-echo "Post Explanatory Text" >> ${CERT_DIR}/misc-explanatory-text.crt
+echo "Pre Explanatory Text" > ${CERT_DIR}/misc-explanatory-text.pem
+cat ${CERT_DIR}/server-a-rsa.pem >> ${CERT_DIR}/misc-explanatory-text.pem
+echo "Post Explanatory Text" >> ${CERT_DIR}/misc-explanatory-text.pem

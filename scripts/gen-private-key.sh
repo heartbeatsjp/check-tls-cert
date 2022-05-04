@@ -11,7 +11,7 @@ gen_ca_private_key() {
   local name=$1
   local algo=$2
 
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
 
   _gen_ca_private_key ${key_file} ${algo}
 }
@@ -22,7 +22,7 @@ gen_server_private_key() {
   local cipher=$3
   local pass_file=$4
 
-  key_file=${PRIVATE_KEY_DIR}/${name}.key
+  key_file=${PRIVATE_KEY_DIR}/${name}.pem
   if [[ -n ${pass_file} ]]; then
     pass_file=${PRIVATE_KEY_DIR}/${pass_file}
   fi
@@ -96,9 +96,9 @@ gen_server_private_key ca-intermediate-a-rsa-ocsp-responder rsa
 
 # variables PEM format
 # No EOL
-cat ${PRIVATE_KEY_DIR}/server-a-rsa.key | awk '!/-----END/ {print} /-----END/ {printf("%s", $0)}' > ${PRIVATE_KEY_DIR}/misc-no-eol.key
+cat ${PRIVATE_KEY_DIR}/server-a-rsa.pem | awk '!/-----END/ {print} /-----END/ {printf("%s", $0)}' > ${PRIVATE_KEY_DIR}/misc-no-eol.pem
 
 # Explanatory Text
-echo "Pre Explanatory Text" > ${PRIVATE_KEY_DIR}/misc-explanatory-text.key
-cat ${PRIVATE_KEY_DIR}/server-a-rsa.key >> ${PRIVATE_KEY_DIR}/misc-explanatory-text.key
-echo "Post Explanatory Text" >> ${PRIVATE_KEY_DIR}/misc-explanatory-text.key
+echo "Pre Explanatory Text" > ${PRIVATE_KEY_DIR}/misc-explanatory-text.pem
+cat ${PRIVATE_KEY_DIR}/server-a-rsa.pem >> ${PRIVATE_KEY_DIR}/misc-explanatory-text.pem
+echo "Post Explanatory Text" >> ${PRIVATE_KEY_DIR}/misc-explanatory-text.pem

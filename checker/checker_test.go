@@ -96,7 +96,7 @@ func TestResultPrint(t *testing.T) {
 	checker.SetCurrentTime(time.Now())
 
 	// This certificate will expire in 365 days.
-	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
 	cert := certs[0]
 
@@ -199,7 +199,7 @@ func TestResultPrintJSON(t *testing.T) {
 	checker.SetCurrentTime(time.Now())
 
 	// This certificate will expire in 365 days.
-	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	certFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	certs, _ := x509util.ParseCertificateFiles(certFile)
 	cert := certs[0]
 

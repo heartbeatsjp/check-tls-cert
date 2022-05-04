@@ -19,7 +19,7 @@ func TestContainsPEMCertificate(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMCertificate(data))
 
@@ -27,7 +27,7 @@ func TestContainsPEMCertificate(t *testing.T) {
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMCertificate(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa.pem")
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMCertificate(data))
 
@@ -43,19 +43,19 @@ func TestContainsPEMPrivateKey(t *testing.T) {
 	)
 	assert := assert.New(t)
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa-traditional.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa-traditional.pem")
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMPrivateKey(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-ecdsa-traditional.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-ecdsa-traditional.pem")
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMPrivateKey(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa.pem")
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMPrivateKey(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa-encrypted.key")
+	data, err = os.ReadFile("../test/testdata/pki/private/server-a-rsa-encrypted.pem")
 	assert.Nil(err)
 	assert.True(x509util.ContainsPEMPrivateKey(data))
 
@@ -63,7 +63,7 @@ func TestContainsPEMPrivateKey(t *testing.T) {
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMPrivateKey(data))
 
-	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	data, err = os.ReadFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 	assert.Nil(err)
 	assert.False(x509util.ContainsPEMPrivateKey(data))
 

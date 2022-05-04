@@ -63,7 +63,7 @@ func TestNewCertificateChecker(t *testing.T) {
 	//                  36:3f
 	//             Exponent: 65537 (0x10001)
 	//
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 	c = checker.NewCertificateChecker(serverCert)
 
 	w.Reset()
@@ -106,7 +106,7 @@ func TestNewCertificateChecker(t *testing.T) {
 	//                  25:a7:5a:61:65:34:f8:cc:92:04:72:d4:5f:26:87:
 	//                  14:e2:48:64:d6
 	//             NIST CURVE: P-256
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ecdsa.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ecdsa.pem")
 	c = checker.NewCertificateChecker(serverCert)
 
 	w.Reset()
@@ -146,7 +146,7 @@ func TestNewCertificateChecker(t *testing.T) {
 	//                  1d:84:84:80:3a:4f:0f:9a:d6:c7:77:73:8a:8d:c2:
 	//                  5e:1d:23:ab:a7:aa:a1:71:c1:cf:fd:26:6a:c8:ba:
 	//                  67:16
-	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ed25519.crt")
+	serverCert, _ = x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-ed25519.pem")
 	c = checker.NewCertificateChecker(serverCert)
 
 	w.Reset()
@@ -176,7 +176,7 @@ func TestCertificateChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	serverCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	serverCert, _ := x509util.ParseCertificateFile("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 
 	// verbose 1
 	checker.SetVerbose(1)

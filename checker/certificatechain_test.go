@@ -48,8 +48,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 17:09:50 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 
@@ -114,8 +114,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//               Issuer    : CN=Intermediate CA A RSA
 	//               Expiration: 2022-02-21 17:52:57 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 	chains = c.Details().(checker.CertificateChainDetails)
@@ -201,8 +201,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//               Issuer    : CN=Intermediate CA A RSA
 	//               Expiration: 2022-02-21 17:52:57 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.crt", "../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem", "../test/testdata/pki/root-ca/ca-root-g2-rsa-cross.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g1-rsa.pem", "../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 	chains = c.Details().(checker.CertificateChainDetails)
@@ -294,7 +294,7 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 18:04:30 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
 	c = checker.NewCertificateChainChecker(certs, nil)
 
 	w.Reset()
@@ -348,8 +348,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//             Expiration: 2020-01-01 09:00:00 +0900
 	//             Error     : the certificate has expired on 2020-01-01 09:00:00 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/expired/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 
@@ -406,8 +406,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//             Issuer    : CN=Intermediate CA A RSA
 	//             Expiration: 2022-02-21 18:09:37 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/expired/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 
@@ -462,8 +462,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//             Expiration: 2022-02-21 18:11:42 +0900
 	//             Error     : crypto/rsa: verification error / parent certificate may not be correct issuer
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-b-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 
@@ -517,8 +517,8 @@ func TestNewCertificateChainChecker(t *testing.T) {
 	//           Issuer    : CN=ROOT CA G2 RSA
 	//           Expiration: 2031-02-23 09:01:04 +0900
 	//
-	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt", "../test/testdata/pki/cert/valid/server-a-rsa.crt")
-	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ = x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem", "../test/testdata/pki/cert/valid/server-a-rsa.pem")
+	rootCerts, _ = x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ = x509util.GetRootCertPool(rootCerts, false)
 	c = checker.NewCertificateChainChecker(certs, rootCertPool)
 	chains = c.Details().(checker.CertificateChainDetails)
@@ -559,8 +559,8 @@ func TestCertificateChainChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	certs, _ := x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.crt")
-	rootCerts, _ := x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.crt")
+	certs, _ := x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem", "../test/testdata/pki/cert/valid/ca-intermediate-a-rsa.pem")
+	rootCerts, _ := x509util.ParseCertificateFiles("../test/testdata/pki/root-ca/ca-root-g2-rsa.pem")
 	rootCertPool, _ := x509util.GetRootCertPool(rootCerts, false)
 	c := checker.NewCertificateChainChecker(certs, rootCertPool)
 	assert.Equal("Certificate Chains", c.Name())

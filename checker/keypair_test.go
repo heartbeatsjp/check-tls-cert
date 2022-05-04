@@ -23,37 +23,37 @@ func TestNewKeyPairChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	rsaKeyFile := "../test/testdata/pki/private/server-a-rsa.key"
+	rsaKeyFile := "../test/testdata/pki/private/server-a-rsa.pem"
 	rsaPrivKeyInfo, _ := x509util.ParsePrivateKeyFile(rsaKeyFile, nil)
 	rsaPubKeyInfoInPrivKey, err := x509util.ExtractPublicKeyFromPrivateKey(rsaPrivKeyInfo)
 	assert.Nil(err)
 
-	rsaCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.crt"
+	rsaCertFile := "../test/testdata/pki/cert/valid/server-a-rsa.pem"
 	rsaCerts, _ := x509util.ParseCertificateFiles(rsaCertFile)
 	rsaPubKeyInfo, err := x509util.ExtractPublicKeyFromCertificate(rsaCerts[0])
 	assert.Nil(err)
 
-	ecdsaKeyFile := "../test/testdata/pki/private/server-a-ecdsa.key"
+	ecdsaKeyFile := "../test/testdata/pki/private/server-a-ecdsa.pem"
 	ecdsaPrivKeyInfo, _ := x509util.ParsePrivateKeyFile(ecdsaKeyFile, nil)
 	ecdsaPubKeyInfoInPrivKey, err := x509util.ExtractPublicKeyFromPrivateKey(ecdsaPrivKeyInfo)
 	assert.Nil(err)
 
-	ecdsaCertFile := "../test/testdata/pki/cert/valid/server-a-ecdsa.crt"
+	ecdsaCertFile := "../test/testdata/pki/cert/valid/server-a-ecdsa.pem"
 	ecdsaCerts, _ := x509util.ParseCertificateFiles(ecdsaCertFile)
 	ecdsaPubKeyInfo, err := x509util.ExtractPublicKeyFromCertificate(ecdsaCerts[0])
 	assert.Nil(err)
 
-	ed25519KeyFile := "../test/testdata/pki/private/server-a-ed25519.key"
+	ed25519KeyFile := "../test/testdata/pki/private/server-a-ed25519.pem"
 	ed25519PrivKeyInfo, _ := x509util.ParsePrivateKeyFile(ed25519KeyFile, nil)
 	ed25519PubKeyInfoInPrivKey, err := x509util.ExtractPublicKeyFromPrivateKey(ed25519PrivKeyInfo)
 	assert.Nil(err)
 
-	ed25519CertFile := "../test/testdata/pki/cert/valid/server-a-ed25519.crt"
+	ed25519CertFile := "../test/testdata/pki/cert/valid/server-a-ed25519.pem"
 	ed25519Certs, _ := x509util.ParseCertificateFiles(ed25519CertFile)
 	ed25519PubKeyInfo, err := x509util.ExtractPublicKeyFromCertificate(ed25519Certs[0])
 	assert.Nil(err)
 
-	invalidKeyFile := "../test/testdata/pki/private/server-b-rsa.key"
+	invalidKeyFile := "../test/testdata/pki/private/server-b-rsa.pem"
 	invalidPrivKeyInfo, _ := x509util.ParsePrivateKeyFile(invalidKeyFile, nil)
 	invalidPubKeyInfoInPrivKey, err := x509util.ExtractPublicKeyFromPrivateKey(invalidPrivKeyInfo)
 	assert.Nil(err)
@@ -314,11 +314,11 @@ func TestKeyPairChecker(t *testing.T) {
 	checker.SetDNType(x509util.StrictDN)
 	checker.SetCurrentTime(time.Now())
 
-	rsaPrivKeyInfo, err := x509util.ParsePrivateKeyFile("../test/testdata/pki/private/server-a-rsa.key", nil)
+	rsaPrivKeyInfo, err := x509util.ParsePrivateKeyFile("../test/testdata/pki/private/server-a-rsa.pem", nil)
 	assert.Nil(err)
 	rsaPubKeyInfoInPrivKey, err := x509util.ExtractPublicKeyFromPrivateKey(rsaPrivKeyInfo)
 	assert.Nil(err)
-	rsaCerts, err := x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.crt")
+	rsaCerts, err := x509util.ParseCertificateFiles("../test/testdata/pki/cert/valid/server-a-rsa.pem")
 	assert.Nil(err)
 	rsaPubKeyInfo, err := x509util.ExtractPublicKeyFromCertificate(rsaCerts[0])
 	assert.Nil(err)
