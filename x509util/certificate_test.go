@@ -47,7 +47,7 @@ func TestParseCertificateFiles(t *testing.T) {
 	assert.Equal("CN=server-a.test", certs[0].Subject.String())
 
 	// valid file (DER)
-	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa-der.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.der"
 	certs, err = x509util.ParseCertificateFiles(serverCertFile)
 	assert.Nil(err)
 	assert.Equal(1, len(certs))
@@ -115,7 +115,7 @@ func TestParseCertificateFile(t *testing.T) {
 	assert.Equal("CN=server-a.test", cert.Subject.String())
 
 	// valid file (DER)
-	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa-der.crt"
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.der"
 	cert, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())

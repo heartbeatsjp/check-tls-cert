@@ -23,6 +23,7 @@ dist/
 
 # Certificates for test
 test/testdata/pki/cert/valid/*.crt
+test/testdata/pki/cert/valid/*.der
 test/testdata/pki/chain/*.pem
 
 # Coverage

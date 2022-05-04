@@ -36,7 +36,7 @@ _gen_server_private_key() {
   local pass_file=$4
 
   traditional_key_file=${key_file%.key}-traditional.key
-  der_key_file=${key_file%.key}-der.key
+  der_key_file=${key_file%.key}.der
 
   if [[ -n ${cipher} ]]; then
     cipher=-${cipher}
@@ -179,7 +179,7 @@ _gen_server_cert() {
   local days=$7
   local startdate=$8
 
-  der_cert_file=${cert_file%.crt}-der.crt
+  der_cert_file=${cert_file%.crt}.der
 
   if [[ -n "${startdate}" ]]; then
     now=$(date)
