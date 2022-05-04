@@ -129,7 +129,7 @@ If the response error is others, the status will be "UNKNOWN".
 
 ### Encoding format for certificates and private keys
 
-Only PEM format is supported.
+Only PEM and DER formats are supported.
 
 ### Digital signature algorithms
 

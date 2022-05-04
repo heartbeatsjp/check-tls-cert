@@ -3,12 +3,13 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
+PRIVATE_KEY_DIR=test/testdata/pki/private
 CA_CERT_DIR=test/testdata/pki/root-ca
 VALID_CERT_DIR=test/testdata/pki/cert/valid
 CHAIN_CERT_DIR=test/testdata/pki/chain
 
 
-# Certfificate Chain
+# Certificate Chain
 cat ${VALID_CERT_DIR}/ca-intermediate-a-rsa.crt \
     > ${CHAIN_CERT_DIR}/chain-a-rsa.pem
 
@@ -48,3 +49,8 @@ cat ${CA_CERT_DIR}/ca-root-g2-rsa.crt \
     ${VALID_CERT_DIR}/ca-intermediate-a-rsa.crt \
     > ${CHAIN_CERT_DIR}/invalid-ca.pem
 
+# Mixed file
+cat ${VALID_CERT_DIR}/server-a-rsa.crt \
+    ${VALID_CERT_DIR}/ca-intermediate-a-rsa.crt \
+    ${PRIVATE_KEY_DIR}/server-a-rsa.key \
+    > ${CHAIN_CERT_DIR}/fullchain-a-rsa-private-key.pem

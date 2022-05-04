@@ -14,9 +14,10 @@ import (
 
 func TestParsePrivateKeyFile(t *testing.T) {
 	var (
-		privKeyFile                       string
-		privKeyInfo, decryptedPrivKeyInfo x509util.PrivateKeyInfo
-		err                               error
+		privKeyFile                 string
+		privKeyInfo, derPrivKeyInfo x509util.PrivateKeyInfo
+		decryptedPrivKeyInfo        x509util.PrivateKeyInfo
+		err                         error
 	)
 	assert := assert.New(t)
 
@@ -43,12 +44,14 @@ func TestParsePrivateKeyFile(t *testing.T) {
 
 	// no EOL
 	privKeyFile = "../test/testdata/pki/private/misc-no-eol.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.RSA, privKeyInfo.PublicKeyAlgorithm)
 
 	// Explanatory Text
 	privKeyFile = "../test/testdata/pki/private/misc-explanatory-text.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.RSA, privKeyInfo.PublicKeyAlgorithm)
 
 	/*
@@ -56,24 +59,40 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	 */
 
 	privKeyFile = "../test/testdata/pki/private/server-a-rsa.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.RSA, privKeyInfo.PublicKeyAlgorithm)
 
+	privKeyFile = "../test/testdata/pki/private/server-a-rsa-der.key"
+	derPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
+	assert.Equal(x509.RSA, privKeyInfo.PublicKeyAlgorithm)
+	assert.Equal(privKeyInfo.Key, derPrivKeyInfo.Key)
+
 	privKeyFile = "../test/testdata/pki/private/server-a-rsa-encrypted.key"
-	decryptedPrivKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	decryptedPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	assert.Nil(err)
 	assert.Equal(x509.RSA, decryptedPrivKeyInfo.PublicKeyAlgorithm)
 	assert.Equal(privKeyInfo.Key, decryptedPrivKeyInfo.Key)
+
+	privKeyFile = "../test/testdata/pki/chain/fullchain-a-rsa-private-key.pem"
+	derPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
+	assert.Equal(x509.RSA, privKeyInfo.PublicKeyAlgorithm)
+	assert.Equal(privKeyInfo.Key, derPrivKeyInfo.Key)
 
 	/*
 	 * RSA (traditional)
 	 */
 
 	privKeyFile = "../test/testdata/pki/private/server-a-rsa-traditional.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.RSA, privKeyInfo.PublicKeyAlgorithm)
 
 	privKeyFile = "../test/testdata/pki/private/server-a-rsa-traditional-encrypted.key"
-	decryptedPrivKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	decryptedPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	assert.Nil(err)
 	assert.Equal(x509.RSA, decryptedPrivKeyInfo.PublicKeyAlgorithm)
 	assert.Equal(privKeyInfo.Key, decryptedPrivKeyInfo.Key)
 
@@ -82,11 +101,19 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	 */
 
 	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.ECDSA, privKeyInfo.PublicKeyAlgorithm)
 
+	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa-der.key"
+	derPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
+	assert.Equal(x509.ECDSA, privKeyInfo.PublicKeyAlgorithm)
+	assert.Equal(privKeyInfo.Key, derPrivKeyInfo.Key)
+
 	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa-encrypted.key"
-	decryptedPrivKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	decryptedPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	assert.Nil(err)
 	assert.Equal(x509.ECDSA, decryptedPrivKeyInfo.PublicKeyAlgorithm)
 	assert.Equal(privKeyInfo.Key, decryptedPrivKeyInfo.Key)
 
@@ -95,11 +122,13 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	 */
 
 	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa-traditional.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.ECDSA, privKeyInfo.PublicKeyAlgorithm)
 
 	privKeyFile = "../test/testdata/pki/private/server-a-ecdsa-traditional-encrypted.key"
-	decryptedPrivKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	decryptedPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	assert.Nil(err)
 	assert.Equal(x509.ECDSA, decryptedPrivKeyInfo.PublicKeyAlgorithm)
 	assert.Equal(privKeyInfo.Key, decryptedPrivKeyInfo.Key)
 
@@ -108,11 +137,19 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	 */
 
 	privKeyFile = "../test/testdata/pki/private/server-a-ed25519.key"
-	privKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	privKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
 	assert.Equal(x509.Ed25519, privKeyInfo.PublicKeyAlgorithm)
 
+	privKeyFile = "../test/testdata/pki/private/server-a-ed25519-der.key"
+	derPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.Nil(err)
+	assert.Equal(x509.Ed25519, privKeyInfo.PublicKeyAlgorithm)
+	assert.Equal(privKeyInfo.Key, derPrivKeyInfo.Key)
+
 	privKeyFile = "../test/testdata/pki/private/server-a-ed25519-encrypted.key"
-	decryptedPrivKeyInfo, _ = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	decryptedPrivKeyInfo, err = x509util.ParsePrivateKeyFile(privKeyFile, password)
+	assert.Nil(err)
 	assert.Equal(x509.Ed25519, decryptedPrivKeyInfo.PublicKeyAlgorithm)
 	assert.Equal(privKeyInfo.Key, decryptedPrivKeyInfo.Key)
 
@@ -121,6 +158,10 @@ func TestParsePrivateKeyFile(t *testing.T) {
 	 */
 
 	privKeyFile = "../test/testdata/pki/private/server-a-ed488.key"
+	_, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
+	assert.NotNil(err)
+
+	privKeyFile = "../test/testdata/pki/private/server-a-ed488-der.key"
 	_, err = x509util.ParsePrivateKeyFile(privKeyFile, nil)
 	assert.NotNil(err)
 

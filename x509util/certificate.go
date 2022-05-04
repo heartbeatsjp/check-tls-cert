@@ -19,33 +19,31 @@ import (
 
 // ParseCertificateFiles parses certifcate files in PEM format and returns certificates.
 func ParseCertificateFiles(certFiles ...string) (certs []*x509.Certificate, err error) {
-	var pemData []byte
-
 	for _, certFile := range certFiles {
-		if certFile != "" {
-			buf, err := os.ReadFile(certFile)
-			if err != nil {
-				return nil, err
-			}
-			if !bytes.HasSuffix(buf, []byte{'\n'}) {
-				buf = append(buf, '\n')
-			}
-			pemData = append(pemData, buf...)
-		}
-	}
-
-	for len(pemData) > 0 {
-		block, rest := pem.Decode(pemData)
-		pemData = rest
-		if block == nil {
-			break
+		if certFile == "" {
+			continue
 		}
 
-		cert, err := x509.ParseCertificate(block.Bytes)
+		data, err := os.ReadFile(certFile)
 		if err != nil {
 			return nil, err
 		}
-		certs = append(certs, cert)
+
+		if ContainsPEMCertificate(data) {
+			// PEM format
+			c, err := parsePEMCertificates(data)
+			if err == nil {
+				certs = append(certs, c...)
+			}
+		} else if ContainsPEMPrivateKey(data) {
+			// Skip
+		} else {
+			// DER format
+			c, err := x509.ParseCertificate(data)
+			if err == nil {
+				certs = append(certs, c)
+			}
+		}
 	}
 
 	if len(certs) == 0 {
@@ -55,20 +53,38 @@ func ParseCertificateFiles(certFiles ...string) (certs []*x509.Certificate, err 
 	return certs, nil
 }
 
-const timeFormat = "2006-01-02 15:04:05 -0700"
-
 // ParseCertificateFile parses a certifcate file in PEM format and returns the first certificate.
 func ParseCertificateFile(certFile string) (cert *x509.Certificate, err error) {
-	pemData, err := os.ReadFile(certFile)
+	certs, err := ParseCertificateFiles(certFile)
 	if err != nil {
 		return nil, err
 	}
-
-	block, _ := pem.Decode(pemData)
-	if block == nil {
-		return nil, errors.New("no PEM format")
+	if len(certs) == 0 {
+		return nil, errors.New("no certificate")
 	}
-	return x509.ParseCertificate(block.Bytes)
+	return certs[0], nil
+}
+
+func parsePEMCertificates(data []byte) (certs []*x509.Certificate, err error) {
+	for len(data) > 0 {
+		block, rest := pem.Decode(data)
+		data = rest
+		if block == nil {
+			break
+		}
+
+		if block.Type != "CERTIFICATE" {
+			continue
+		}
+
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, err
+		}
+		certs = append(certs, cert)
+	}
+
+	return certs, nil
 }
 
 // GetRootCertPool retrieves the root certificate pool.
@@ -150,6 +166,8 @@ func BuildCertificateChains(certs []*x509.Certificate, rootCertPool *x509.CertPo
 
 	return chains
 }
+
+const timeFormat = "2006-01-02 15:04:05 -0700"
 
 // VerifyValidity verifies the validity of the certificate.
 func VerifyValidity(cert *x509.Certificate, days int, currentTime time.Time) (message string, err error) {

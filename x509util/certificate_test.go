@@ -15,12 +15,13 @@ import (
 
 func TestParseCertificateFiles(t *testing.T) {
 	var (
-		serverCertFile, chainCertFile string
-		certs                         []*x509.Certificate
-		err                           error
+		serverCertFile, chainCertFile, keyFile string
+		certs                                  []*x509.Certificate
+		err                                    error
 	)
 	assert := assert.New(t)
 
+	keyFile = "../test/testdata/pki/private/server-a-rsa.key"
 	chainCertFile = "../test/testdata/pki/chain/chain-a-rsa.pem"
 
 	// non-existent file
@@ -38,28 +39,46 @@ func TestParseCertificateFiles(t *testing.T) {
 	_, err = x509util.ParseCertificateFiles(serverCertFile)
 	assert.NotNil(err)
 
-	// valid file
+	// valid file (PEM)
 	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
-	certs, _ = x509util.ParseCertificateFiles(serverCertFile)
+	certs, err = x509util.ParseCertificateFiles(serverCertFile)
+	assert.Nil(err)
+	assert.Equal(1, len(certs))
+	assert.Equal("CN=server-a.test", certs[0].Subject.String())
+
+	// valid file (DER)
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa-der.crt"
+	certs, err = x509util.ParseCertificateFiles(serverCertFile)
+	assert.Nil(err)
 	assert.Equal(1, len(certs))
 	assert.Equal("CN=server-a.test", certs[0].Subject.String())
 
 	// valid file with chain certificate file
-	certs, _ = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	certs, err = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	assert.Nil(err)
+	assert.Equal(2, len(certs))
+	assert.Equal("CN=server-a.test", certs[0].Subject.String())
+	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
+
+	// mixed file with certificates and private key
+	certs, err = x509util.ParseCertificateFiles(serverCertFile, chainCertFile, keyFile)
+	assert.Nil(err)
 	assert.Equal(2, len(certs))
 	assert.Equal("CN=server-a.test", certs[0].Subject.String())
 	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
 
 	// no EOL
 	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.crt"
-	certs, _ = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	certs, err = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	assert.Nil(err)
 	assert.Equal(2, len(certs))
 	assert.Equal("CN=server-a.test", certs[0].Subject.String())
 	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
 
 	// Explanatory Text
 	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.crt"
-	certs, _ = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	certs, err = x509util.ParseCertificateFiles(serverCertFile, chainCertFile)
+	assert.Nil(err)
 	assert.Equal(2, len(certs))
 	assert.Equal("CN=server-a.test", certs[0].Subject.String())
 	assert.Equal("CN=Intermediate CA A RSA", certs[1].Subject.String())
@@ -89,21 +108,29 @@ func TestParseCertificateFile(t *testing.T) {
 	_, err = x509util.ParseCertificateFile(serverCertFile)
 	assert.NotNil(err, "file should not be a certificate: %s", serverCertFile)
 
-	// valid file
+	// valid file (PEM)
 	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa.crt"
-	cert, _ = x509util.ParseCertificateFile(serverCertFile)
+	cert, err = x509util.ParseCertificateFile(serverCertFile)
+	assert.Nil(err)
+	assert.Equal("CN=server-a.test", cert.Subject.String())
+
+	// valid file (DER)
+	serverCertFile = "../test/testdata/pki/cert/valid/server-a-rsa-der.crt"
+	cert, err = x509util.ParseCertificateFile(serverCertFile)
+	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())
 
 	// no EOL
 	serverCertFile = "../test/testdata/pki/cert/valid/misc-no-eol.crt"
-	cert, _ = x509util.ParseCertificateFile(serverCertFile)
+	cert, err = x509util.ParseCertificateFile(serverCertFile)
+	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())
 
 	// Explanatory Text
 	serverCertFile = "../test/testdata/pki/cert/valid/misc-explanatory-text.crt"
-	cert, _ = x509util.ParseCertificateFile(serverCertFile)
+	cert, err = x509util.ParseCertificateFile(serverCertFile)
+	assert.Nil(err)
 	assert.Equal("CN=server-a.test", cert.Subject.String())
-
 }
 
 func TestVerifyValidity(t *testing.T) {
